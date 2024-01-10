@@ -33,7 +33,11 @@ static std::unordered_map<COLO_NODE_STATUS, std::string> colo_node_status_to_str
 typedef struct _colo_status {
     COLO_NODE_STATUS local_status;
     std::string host_ip;
+    std::string host_user;
+    std::string host_file_path;
     std::string peer_ip;
+    std::string peer_user;
+    std::string peer_file_path;
 } colo_status;
 
 enum COLO_COMMAND_TYPE {

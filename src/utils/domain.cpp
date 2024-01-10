@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include "config_parser.h"
+#include "runvm.h"
+
 
 
 int vm_config_parse(const YAML::Node& config, domain& new_domain) {
@@ -130,10 +132,10 @@ int vm_config_parse(const YAML::Node& config, domain& new_domain) {
     return 0;
 }
 
-#define ADD_ARG(arg) qemu_command_add_arg(cmd, (arg))
-#define ADD_ARGS(arg1, arg2) qemu_command_add_args(cmd, (arg1), (arg2))
+#define ADD_ARG(arg) shell_command_add_arg(cmd, (arg))
+#define ADD_ARGS(arg1, arg2) shell_command_add_args(cmd, (arg1), (arg2))
 
-int generate_vm_cmd(const domain& d, qemu_command& cmd) {
+int generate_vm_cmd(const domain& d, shell_command& cmd) {
     cmd.binaryPath = d.qemu_path;
     ADD_ARG(cmd.binaryPath);
     ADD_ARG("-enable-kvm");
@@ -142,7 +144,7 @@ int generate_vm_cmd(const domain& d, qemu_command& cmd) {
     ADD_ARGS("-m", std::to_string(d.memory_size));
     ADD_ARGS("-smp", std::to_string(d.vcpu));
     ADD_ARGS("-overcommit", "mem-lock=off");
-    ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server");   
+    ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server=on,wait=off");   
     ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=on");
     ADD_ARGS("-vnc", ":7");
     ADD_ARGS("-rtc", "base=utc");
@@ -163,7 +165,7 @@ int generate_vm_cmd(const domain& d, qemu_command& cmd) {
     return 0;
 }
 
-int generate_pvm_cmd(const domain& d, const colo_status& cs, qemu_command& cmd) {
+int generate_pvm_cmd(const domain& d, const colo_status& cs, shell_command& cmd) {
     std::string host_ip = cs.local_status == COLO_NODE_PRIMARY ? cs.host_ip : cs.peer_ip;
     std::string sec_ip = cs.local_status == COLO_NODE_PRIMARY ? cs.peer_ip : cs.host_ip;
     cmd.binaryPath = d.qemu_path;
@@ -207,7 +209,7 @@ int generate_pvm_cmd(const domain& d, const colo_status& cs, qemu_command& cmd) 
     return 0;
 }
 
-int generate_svm_cmd(const domain& d, const colo_status& cs, qemu_command& cmd) {
+int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd) {
     std::string host_ip = cs.local_status == COLO_NODE_SECONDARY ? cs.host_ip : cs.peer_ip;
     std::string pri_ip = cs.local_status == COLO_NODE_PRIMARY ? cs.host_ip : cs.peer_ip;
     cmd.binaryPath = d.qemu_path;
@@ -258,6 +260,7 @@ int save_new_vm(const YAML::Node& vmdef, const domain& d) {
     dom["path"] = save_path;
     dom["pid"] = -1;
     dom["status"] = "shutoff";
+    dom["colo_enable"] = false;
     if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
         sf["domains"].push_back(dom);
     } else if (!sf["domains"].IsSequence()) {
@@ -311,19 +314,21 @@ int vm_undefine(const std::string& domain_name) {
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     YAML::Node domains;
     bool rm = false;
+    bool colo_enable = false;
     for (int i = 0; i < sf["domains"].size(); i++) {
         if (domain_name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
             rm = true;
+            if (sf["domains"][i]["colo_enable"].as<bool>()) {
+                colo_enable = true;
+            }
         } else {
             domains.push_back(sf["domains"][i]);
         }
     }
+    if (colo_enable) {
+        std::cout << "remove colo file, domain name : " << domain_name << "." << std::endl;
+    }
     if (rm) {
-        // if (domains.IsNull()) {
-        //     sf.remove(sf["domains"]);
-        // } else {
-            
-        // }
         sf["domains"] = domains;
         std::ofstream fout(DEFAULT_SAVE_FILE);
         fout << sf;
@@ -335,5 +340,122 @@ int vm_undefine(const std::string& domain_name) {
 
     
     // todo: rm domain.yaml in save path 
+    return 0;
+}
+
+int get_domain(const std::string& domain_name, domain& d) {
+    YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
+    bool find = false;
+    for (int i = 0; i < sf["domains"].size(); i++) {
+        if (domain_name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
+            find = true;
+            YAML::Node vmdef = YAML::LoadFile(sf["domains"][i]["path"].as<std::string>());
+            if (vm_config_parse(vmdef, d) < 0) {
+                std::cerr << "cannot parse vm definition file." << std::endl;
+                return -1;
+            }
+        }
+    }
+    if (!find) {
+        return -1;
+    }
+    return 0;
+}
+
+int get_domain_pid(const std::string& domain_name, int& pid) {
+    YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
+    for (int i = 0; i < sf["domains"].size(); i++) {
+        if (domain_name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
+            int p = sf["domains"][i]["pid"].as<int>();
+            if (p == -1) {
+                std::cerr << "domain is not running." << std::endl;
+                return -1;
+            } else {
+                pid = p;
+                return 0;
+            }
+            
+        }
+    }
+    return -1;
+}
+
+int get_domain_config_file_path(const std::string& domain_name, std::string& path) {
+    YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
+    for (int i = 0; i < sf["domains"].size(); i++) {
+        if (domain_name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
+            path = sf["domains"][i]["path"].as<std::string>();
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int get_domain_status(const std::string& domain_name) {
+    domain d;
+    if (get_domain(domain_name, d) < 0) {
+        std::cout << "can not get domain data." << std::endl;
+        return -1;
+    }
+    std::cout << "-------------------------------------------\n";
+    std::cout << "       Name: " << d.name << std::endl;
+    std::cout << "    OS Type: " << d.os_type << std::endl;
+    std::cout << "     Status: " << "running" << std::endl;
+    std::cout << "     CPU(s): " << d.vcpu << std::endl;
+    std::cout << "     Memory: " << d.memory_size << " MB" << std::endl;
+    std::cout << "  Disk Size: " << d.disk.disk_size << " MB" << std::endl;
+    std::cout << "Colo Status: " << "none" << std::endl;
+    std::cout << "-------------------------------------------\n";
+    return 0;
+}
+
+
+int colo_enable(const std::string& domain_name) {
+    domain d;
+    if (get_domain(domain_name, d) < 0) {
+        std::cout << "can not get domain data." << std::endl;
+        return -1;
+    }
+    // transfer config file
+    std::string src_config_file;
+    std::string dst_config_file;
+    if (get_domain_config_file_path(domain_name, src_config_file) < 0) {
+        std::cout << "can not find domain config file." << std::endl;
+        return -1;
+    }
+    colo_status cs;
+    if (get_connect_status(cs) < 0) {
+        std::cout << "can not get connect status." << std::endl;
+        return -1;
+    }
+    dst_config_file = cs.peer_user + "@" + cs.peer_ip + ":" + cs.peer_file_path;
+
+    std::cout << "scp " << src_config_file << " " << dst_config_file << std::endl;
+    if (transfer_file(src_config_file, dst_config_file) < 0) {
+        std::cout << "transfer domain config file failed." << std::endl;
+    }
+    std::cout << "transfer domain config file success." << std::endl;
+    // transfer disk image 
+    std::string src_disk_file = d.disk.path;
+    std::string dst_disk_file = cs.peer_user + "@" + cs.peer_ip + ":" + src_disk_file;
+    std::cout << "scp " << src_disk_file << " " << dst_disk_file << std::endl;
+    if (transfer_file(src_disk_file, dst_disk_file) < 0) {
+        std::cout << "transfer domain disk file failed." << std::endl;
+    }
+    std::cout << "transfer domain disk file success." << std::endl;
+    if (set_domain_colo_enable(domain_name) < 0) {
+        std::cout << "can not set config file." << std::endl;
+        return -1;
+    }
+    std::cout << "build colo env success." << std::endl;
+    return 0;
+}
+
+int colo_disable(const std::string& domain_name) {
+    domain d;
+    if (set_domain_colo_disable(domain_name) < 0) {
+        std::cout << "can not set config file." << std::endl;
+        return -1;
+    }
     return 0;
 }

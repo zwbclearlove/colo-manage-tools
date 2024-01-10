@@ -4,7 +4,7 @@
 #include <vector>
 #include <config.h>
 
-typedef struct _qemu_command
+typedef struct _shell_command
 {
     
     int has_error; /* 0 on success, -1 on error  */
@@ -13,9 +13,9 @@ typedef struct _qemu_command
     std::vector<std::string> args;
     int nargs;
 
-} qemu_command;
+} shell_command;
 
-void qemu_command_add_arg(qemu_command& qc, const std::string& arg);
-void qemu_command_add_args(
-    qemu_command& qc, const std::string& arg1, const std::string& arg2);
+void shell_command_add_arg(shell_command& qc, const std::string& arg);
+void shell_command_add_args(
+    shell_command& qc, const std::string& arg1, const std::string& arg2);
 

@@ -1,7 +1,7 @@
 #include <iostream>
 #include "yaml-cpp/yaml.h"
 #include "commandline.h"
-#include "qemu_command.h"
+#include "shell_command.h"
 #include "config.h"
 #include "domain.h"
 #include "config_parser.h"
@@ -120,51 +120,110 @@ int main(int argc, char *argv[]) {
         break;
     case COMMAND_START:
         {   
+            if (!cmd_parser.exist("domain")) {
+                std::cout << "no domain name." << std::endl;
+                return 0;
+            }
+            std::string name = cmd_parser.get<std::string>("domain");
             domain d;
-            qemu_command cmd;
-            vm_define(DEFAULT_CONFIG_DOMAIN_PATH, d);
+            shell_command cmd;
+            if (get_domain(name, d) < 0) {
+                std::cout << "can not get domain data." << std::endl;
+                return 0;
+            }
             // todo: get colo status from colod 
-            colo_status cs;
-            if (parse_config_file(DEFAULT_CONFIG_FILE_PATH, cs) < 0) {
-                std::cerr << "cannot get colo status." << std::endl;
-                return -1;
-            }
-            std::cout << "---------------------------------------" << std::endl;
-            // generate_vm_cmd(d, cmd);
+            // colo_status cs;
+            // if (parse_config_file(DEFAULT_CONFIG_FILE_PATH, cs) < 0) {
+            //     std::cerr << "cannot get colo status." << std::endl;
+            //     return -1;
+            // }
+            //std::cout << "---------------------------------------" << std::endl;
+            generate_vm_cmd(d, cmd);
             // std:: cout << "---------------------------------------" << std::endl;
-            generate_pvm_cmd(d, cs, cmd);  
-            std::cout << "---------------------------------------" << std::endl;
-            qemu_command cmptmp;
-            generate_svm_cmd(d, cs, cmptmp);  
-            std::cout << "---------------------------------------" << std::endl;
-            for (int i = 0; i < cmptmp.nargs; i++) {
-                std::cout << cmptmp.args[i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "---------------------------------------" << std::endl;
+            // generate_pvm_cmd(d, cs, cmd);  
+            // std::cout << "---------------------------------------" << std::endl;
+            // shell_command cmptmp;
+            // generate_svm_cmd(d, cs, cmptmp);  
+            // std::cout << "---------------------------------------" << std::endl;
+            // for (int i = 0; i < cmptmp.nargs; i++) {
+            //     std::cout << cmptmp.args[i] << " ";
+            // }
+            // std::cout << std::endl;
+            // std::cout << "---------------------------------------" << std::endl;
             
-            run_new_vm(cmd);
+            run_new_vm(d.name, cmd);
 
         }
 
         break;
     case COMMAND_DESTROY:
-        {}
+        {
+            if (!cmd_parser.exist("domain")) {
+                std::cout << "no domain name." << std::endl;
+                return 0;
+            }
+            std::string name = cmd_parser.get<std::string>("domain");
+            
+            if (destroy_domain(name) < 0) {
+                std::cout << "can not destroy domain." << std::endl;
+                return 0;
+            }
+            std::cout << "domain " << name <<" is destroyed." << std::endl;
+        }
         break;
     case COMMAND_COLO_ENABLE:
-        {}
+        {
+            if (!cmd_parser.exist("domain")) {
+                std::cout << "no domain name." << std::endl;
+                return 0;
+            }
+            std::string name = cmd_parser.get<std::string>("domain");
+            
+            if (colo_enable(name) < 0) {
+                std::cout << "can not prebuild colo domain." << std::endl;
+                return 0;
+            }
+            std::cout << "build colo domain " << name <<" success." << std::endl;         
+        }
         break;
     case COMMAND_COLO_DISABLE:
-        {}
+        {
+            if (!cmd_parser.exist("domain")) {
+                std::cout << "no domain name." << std::endl;
+                return 0;
+            }
+            std::string name = cmd_parser.get<std::string>("domain");
+            
+            if (colo_disable(name) < 0) {
+                std::cout << "can not disable colo domain." << std::endl;
+                return 0;
+            }
+            std::cout << "domain " << name <<" is already disabled." << std::endl;        
+        }
         break;
     case COMMAND_VM_STATUS:
-        {}
+        {
+            if (!cmd_parser.exist("domain")) {
+                std::cout << "no domain name." << std::endl;
+                return 0;
+            }
+            std::string name = cmd_parser.get<std::string>("domain");
+            
+            if (get_domain_status(name) < 0) {
+                std::cout << "can not get domain status." << std::endl;
+                return 0;
+            }
+        }
         break;
     case COMMAND_SET_PARAMS:
-        {}
+        {
+
+        }
         break;
     case COMMAND_DO_FAILOVER:
-        {}
+        {
+
+        }
         break;
     default:
         break;

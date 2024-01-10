@@ -18,7 +18,7 @@ include_directories(${GLIB_INCLUDE_DIRS})
 
 find_library(LIBYAML NAMES yaml-cpp PATHS ${PROJECT_SOURCE_DIR}/lib/)
 
-set(SRC_LIST src/main.cpp src/utils/domain.cpp src/utils/config_parser.cpp src/utils/runvm.cpp src/utils/qemu_command.cpp)
+set(SRC_LIST src/main.cpp src/utils/domain.cpp src/utils/config_parser.cpp src/utils/runvm.cpp src/utils/shell_command.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${LIBYAML} ${GLIB_LDFLAGS} utils)
