@@ -33,11 +33,7 @@ int run_shell_command_async(shell_command& cmd) {
     } else if (pid > 0) {
         std::cout << "run async task, pid = " << pid << std::endl;
     } else if (pid == 0) {
-        //uid_t uid = getuid();
         int fd;
-        // if (setuid(0) < 0) {
-        //     std::cout << "switch to user failed." << std::endl;
-        // }
         setsid(); //第二步
         chdir("/"); //第三步
         umask(0); //第四步
@@ -50,18 +46,9 @@ int run_shell_command_async(shell_command& cmd) {
         //         close(fd);
         //     }
         // }
-        std::cout << "port 1" << pid << std::endl;
         std::vector<char*> vchar;
         vchar = strlist(cmd.args);
-        std::cout << "port 2" << pid << std::endl;
-
-        std::cout << "port 3" << pid << std::endl;
-        
-        // execvp(cmd.binaryPath.c_str(), arg);
         execvp(cmd.binaryPath.c_str(), vchar.data());
-        // if (setuid(uid) < 0) {
-        //     std::cout << "switch to user failed." << std::endl;
-        // }
         perror("error exec");
     }
     return pid;

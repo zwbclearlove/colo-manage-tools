@@ -62,8 +62,6 @@ int main(int argc, char *argv[])
     ColodServer server(pid, 5678);
     server.server_init();
     server.run();
-    if (setuid(uid) < 0) {
-        std::cout << "switch to user failed." << std::endl;
-    }
+    
     exit(0);
 }

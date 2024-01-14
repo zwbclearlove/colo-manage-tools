@@ -27,26 +27,26 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
     }
     
     // todo: send to colod
-    // buttonrpc remote_client;
-    // remote_client.as_client(rs.current_status.peer_ip, 5678);
-    // remote_client.set_timeout(2000);
+    buttonrpc remote_client;
+    remote_client.as_client(rs.current_status.peer_ip, 5678);
+    remote_client.set_timeout(2000);
     
-    // auto ret = remote_client.call<colod_ret_val>("peer-save-status", rs.current_status);
+    auto ret = remote_client.call<colod_ret_val>("peer-save-status", rs.current_status);
 
-    // if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
-    //     return {
-    //         -1,
-    //         "connect to peer colod timeout.",
-    //     };
-    // }
+    if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+        return {
+            -1,
+            "connect to peer colod timeout.",
+        };
+    }
 
-    // colod_ret_val crv = ret.val();
-    // if (crv.code < 0) {
-    //     return {
-    //         -1,
-    //         crv.msg,
-    //     };
-    // }
+    colod_ret_val crv = ret.val();
+    if (crv.code < 0) {
+        return {
+            -1,
+            crv.msg,
+        };
+    }
 
 
     if (save_colo_status(rs.current_status) < 0) {
@@ -307,15 +307,15 @@ colod_ret_val colod_do_failover(std::string domain_name) {
 
 // peer colod insterface
 colod_ret_val colod_connect_test() {
-    std::cout << "colod_connect_test" << std::endl;
+    
     return {
         0,
-        "",
+        "fine",
     };
 }
 
 colod_ret_val colod_domain_test() {
-    std::cout << "colod_domain_test" << std::endl;
+    
     return {
         0,
         "",
@@ -323,9 +323,22 @@ colod_ret_val colod_domain_test() {
 }
 
 colod_ret_val peer_colod_save_status(colo_status cs) {
-    std::cout << "peer_colod_save_status" << std::endl;
+    if (rs.current_status.local_status == COLO_NODE_PRIMARY) {
+        rs.current_status.local_status = COLO_NODE_SECONDARY;
+    } else if (rs.current_status.local_status == COLO_NODE_SECONDARY) {
+        rs.current_status.local_status = COLO_NODE_PRIMARY;
+    } else {
+        rs.current_status.local_status = COLO_NODE_NONE;
+    }
+    rs.current_status.host_ip = cs.peer_ip;
+    rs.current_status.host_user = cs.peer_user;
+    rs.current_status.host_file_path = cs.peer_file_path;
+    rs.current_status.peer_ip = cs.host_ip;
+    rs.current_status.peer_user = cs.host_user;
+    rs.current_status.peer_file_path = cs.host_file_path;
+    
     return {
         0,
-        "",
+        "peer colod save status success.",
     };
 }

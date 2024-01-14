@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
     cmd_parser.add<std::string>("config-file", 'c', "configuration file", false, "");
     cmd_parser.add<std::string>("domain", 'd', "domain name", false, "");
     cmd_parser.add("all", '\0', "show all the vms");
+    cmd_parser.add("colo", '\0', "start vm in colo mode");
     cmd_parser.add<int>("checkpoint-time", '\0', "checkpoint time", false, 1000);
     cmd_parser.add<int>("compare-timeout", '\0', "compare timeout", false, 1000);
     cmd_parser.add<int>("max_queue_size", '\0', "max_queue_size", false, 65535);
@@ -164,10 +165,12 @@ int main(int argc, char *argv[]) {
         break;
     case COMMAND_START:
         {   
+
             if (!cmd_parser.exist("domain")) {
                 std::cout << "no domain name." << std::endl;
                 return 0;
             }
+            bool colo = cmd_parser.exist("colo");
             std::string name = cmd_parser.get<std::string>("domain");
             auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_START], name);
 
@@ -263,6 +266,8 @@ int main(int argc, char *argv[]) {
                 return 0;
             }
             std::string name = cmd_parser.get<std::string>("domain");
+            
+            
 
             auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_VM_STATUS], name);
 
