@@ -7,7 +7,7 @@
 #include "config_parser.h"
 #include "runvm.h"
 #include "colod.h"
-#include "buttonrpc.hpp"
+#include "colod_service.h"
 
 
 int main(int argc, char *argv[]) {  
@@ -31,9 +31,9 @@ int main(int argc, char *argv[]) {
     // std::cout << username << "---" << password << std::endl;
     cmd_parser.parse_check(argc, argv);
 
-    buttonrpc client;
-	client.as_client("192.168.10.2", 5555);
-	client.set_timeout(2000);
+    buttonrpc local_client;
+	local_client.as_client("127.0.0.1", 5678);
+	local_client.set_timeout(2000);
 
     std::string cur_command_type_str = cmd_parser.get<std::string>("command-type");
 
@@ -54,32 +54,41 @@ int main(int argc, char *argv[]) {
                 config_file_path = cmd_parser.get<std::string>("config-file");
                 std::cout << "read custom config file : " << config_file_path << std::endl;
             }
-            colo_status cs;
-            if (parse_config_file(config_file_path, cs) < 0) {
-                std::cerr << "can not parse config file." << std::endl;
-                return 0;
-            }
-            // todo: init status of colod
-            // todo: send to colod
+            
+            auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_CONNECT_PEER], config_file_path);
 
-            if (save_colo_status(cs) < 0) {
-                std::cout << "cannot save colo status" << std::endl;
-                return 0;
+            if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+                std::cout << "connect to colod timeout." << std::endl;
+                goto cleanup;
             }
+
+            colod_ret_val crv = ret.val();
+            if (crv.code < 0) {
+                std::cout << crv.msg << std::endl;
+                goto cleanup;
+            }
+            std::cout << crv.msg << std::endl;
+            //std::cout << "connect peer success." << std::endl;
+
         }
         break;
 
     case COMMAND_CONNECT_STATUS:
         {
-            
-            // todo: query status of colod
-            if (get_connect_status() < 0) {
-                std::cout << "cannot get connect status" << std::endl;
-                return 0;
+            auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_CONNECT_STATUS], 0);
+
+            if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+                std::cout << "connect to colod timeout." << std::endl;
+                goto cleanup;
             }
 
-            std::string ret = client.call<std::string>("testfun", "hhhhhhhhh").val();
-	        std::cout << "get testfun ret : " << ret << std::endl;
+            colod_ret_val crv = ret.val();
+            if (crv.code < 0) {
+                std::cout << crv.msg << std::endl;
+                goto cleanup;
+            }
+            std::cout << crv.msg << std::endl;
+            
         }
         break;
     case COMMAND_DEFINE:
@@ -236,6 +245,6 @@ int main(int argc, char *argv[]) {
         break;
     }
     
-
+cleanup:
     exit(0);
 }

@@ -115,6 +115,24 @@ int get_domain_list(bool show_all) {
     return 0;
 }
 
+int domains_init(std::vector<domain_status>& ds_list) {
+    YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
+    if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
+        return 0;
+    }
+    std::cout << "-------------------------------------------\n";
+    for (int i = 0; i < sf["domains"].size(); i++) {
+        domain_status ds;
+        ds.name = sf["domains"][i]["name"].as<std::string>();
+        ds.pid = sf["domains"][i]["pid"].as<int>();
+        ds.colo_enable = sf["domains"][i]["colo_enable"].as<bool>();
+        ds.status = domain_status_map[sf["domains"][i]["name"].as<std::string>()];
+        ds_list.emplace_back(ds);
+    }
+    return 0;
+}
+
+
 int save_domain_pid(const std::string& domain_name, int pid) {
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {

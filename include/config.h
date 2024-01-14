@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include "Serializer.hpp"
 
 #define DEFAULT_CONFIG_FILE_PATH "/home/ubuntu/config/config.yaml"
 #define DEFAULT_CONFIG_DOMAIN_PATH "/home/ubuntu/config/domain.yaml"
@@ -29,7 +30,7 @@ static std::unordered_map<COLO_NODE_STATUS, std::string> colo_node_status_to_str
     {COLO_NODE_ERROR, "error"},
 };
 
-typedef struct _colo_status {
+struct colo_status {
     COLO_NODE_STATUS local_status;
     std::string host_ip;
     std::string host_user;
@@ -37,7 +38,20 @@ typedef struct _colo_status {
     std::string peer_ip;
     std::string peer_user;
     std::string peer_file_path;
-} colo_status;
+
+    // must implement
+	friend Serializer& operator >> (Serializer& in, colo_status& cs) {
+		in >> cs.local_status >> cs.host_ip >> cs.host_user >> cs.host_file_path
+           >> cs.peer_ip >> cs.peer_user >> cs.peer_file_path;
+		return in;
+	}
+	friend Serializer& operator << (Serializer& out, colo_status cs) {
+		out << cs.local_status << cs.host_ip << cs.host_user << cs.host_file_path
+           << cs.peer_ip << cs.peer_user << cs.peer_file_path;
+		return out;
+	} 
+
+};
 
 enum COLO_COMMAND_TYPE {
     COMMAND_CONNECT_PEER,
@@ -82,4 +96,30 @@ static std::unordered_map<COLO_COMMAND_TYPE, std::string> colo_cmd_type_to_str_m
     {COMMAND_VM_STATUS, "vm-status"},
     {COMMAND_SET_PARAMS, "set-params"},
     {COMMAND_DO_FAILOVER, "do-failover"},
+};
+
+
+enum DOMAIN_STATUS {
+    DOMAIN_SHUT_OFF,
+    DOMAIN_START,
+    DOMAIN_RUNNING,
+    DOMAIN_COLO_ENABLED,
+    DOMAIN_ERROR,
+};
+
+
+static std::unordered_map<std::string, DOMAIN_STATUS> domain_status_map = {
+    {"shutoff", DOMAIN_SHUT_OFF},
+    {"start", DOMAIN_START}, 
+    {"running", DOMAIN_RUNNING},
+    {"colo-enabled", DOMAIN_COLO_ENABLED},
+    {"error", DOMAIN_ERROR},
+};
+
+static std::unordered_map<DOMAIN_STATUS, std::string> domain_status_to_str_map = {
+    {DOMAIN_SHUT_OFF, "shutoff"},
+    {DOMAIN_START, "start"}, 
+    {DOMAIN_RUNNING, "running"},
+    {DOMAIN_COLO_ENABLED, "colo-enabled"},
+    {DOMAIN_ERROR, "error"},
 };

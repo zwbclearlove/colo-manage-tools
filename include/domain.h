@@ -7,30 +7,6 @@
 
 
 
-enum DOMAIN_STATUS {
-    DOMAIN_SHUT_OFF,
-    DOMAIN_START,
-    DOMAIN_RUNNING,
-    DOMAIN_COLO_ENABLED,
-    DOMAIN_ERROR,
-};
-
-
-static std::unordered_map<std::string, DOMAIN_STATUS> domain_status_map = {
-    {"shutoff", DOMAIN_SHUT_OFF},
-    {"start", DOMAIN_START}, 
-    {"running", DOMAIN_RUNNING},
-    {"colo-enabled", DOMAIN_COLO_ENABLED},
-    {"error", DOMAIN_ERROR},
-};
-
-static std::unordered_map<DOMAIN_STATUS, std::string> domain_status_to_str_map = {
-    {DOMAIN_SHUT_OFF, "shutoff"},
-    {DOMAIN_START, "start"}, 
-    {DOMAIN_RUNNING, "running"},
-    {DOMAIN_COLO_ENABLED, "colo-enabled"},
-    {DOMAIN_ERROR, "error"},
-};
 
 // enum OS_ARCH_TYPE {
 //     OS_ARCH_X86_64,

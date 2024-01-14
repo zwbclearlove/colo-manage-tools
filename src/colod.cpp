@@ -7,6 +7,7 @@
 #include <iostream>
 #include "colod.h"
 #include "colod_server.h"
+#include "colod_service.h"
 
 #define PID_LENGTH 12
 
@@ -47,16 +48,11 @@ int colod_daemon() {
 }
 
 
-std::string testfun(std::string in) {
-	std::cout << "in testfunc, get arg : " << in << std::endl;
-	return "hello " + in;
-}
-
-
 int main(int argc, char *argv[])
 {
     int pid;
     pid = colod_daemon();
+    rs_init();
     ColodServer server(pid, 5678);
     server.server_init();
     server.run();

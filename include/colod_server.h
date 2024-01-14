@@ -12,6 +12,7 @@ public:
 
     void server_init();
     void run();
+
 private:
     int pid;
     int port;
