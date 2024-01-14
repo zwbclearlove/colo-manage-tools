@@ -115,7 +115,7 @@ int get_domain_list(bool show_all) {
     return 0;
 }
 
-int domains_init(std::vector<domain_status>& ds_list) {
+int domains_init(std::unordered_map<std::string, domain_status>& ds_map) {
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
         return 0;
@@ -127,7 +127,7 @@ int domains_init(std::vector<domain_status>& ds_list) {
         ds.pid = sf["domains"][i]["pid"].as<int>();
         ds.colo_enable = sf["domains"][i]["colo_enable"].as<bool>();
         ds.status = domain_status_map[sf["domains"][i]["name"].as<std::string>()];
-        ds_list.emplace_back(ds);
+        ds_map[ds.name] = ds;
     }
     return 0;
 }

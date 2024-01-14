@@ -1,6 +1,6 @@
 #pragma once
 #include "config.h"
-#include <vector>
+#include <unordered_map>
 
 struct domain_status {
     pid_t pid;
@@ -12,7 +12,7 @@ struct domain_status {
 struct run_status
 {
 	colo_status current_status;
-    std::vector<domain_status> domains;
+    std::unordered_map<std::string, domain_status> domains;
 };
 
 

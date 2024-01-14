@@ -7,123 +7,123 @@
 
 
 
-int vm_config_parse(const YAML::Node& config, domain& new_domain) {
+int vm_config_parse(const YAML::Node& config, domain& new_domain, std::string& err) {
     new_domain.name = config["name"].as<std::string>();
 
     if (!config["qemu"].IsDefined()) {
-        std::cerr << "cannot find qemu emulator." << std::endl;
+        err = "cannot find qemu emulator.";
         return -1;
     }
     new_domain.qemu_path = config["qemu"].as<std::string>();
     
     if (!config["memory"].IsDefined() || !config["memory"].IsScalar()) {
-        std::cerr << "cannot parse vm memory size." << std::endl;
+        err = "cannot parse vm memory size.";
         return -1;
     }
     new_domain.memory_size = config["memory"].as<int>();
 
     if (!config["vcpu"].IsDefined() || !config["vcpu"].IsScalar()) {
-        std::cerr << "cannot parse vcpu size." << std::endl;
+        err = "cannot parse vcpu size.";
         return -1;
     }
     new_domain.vcpu = config["vcpu"].as<int>();
 
     if (!config["os"].IsDefined()) {
-        std::cerr << "cannot find os definition." << std::endl;
+        err = "cannot find os definition.";
         return -1;
     }
     if (!config["os"]["arch"].IsDefined()) {
-        std::cerr << "cannot find os architecture." << std::endl;
+        err = "cannot find os architecture.";
         return -1;
     }
     new_domain.os_arch_type = config["os"]["arch"].as<std::string>();
 
     if (!config["os"]["machine"].IsDefined()) {
-        std::cerr << "cannot find os machine." << std::endl;
+        err = "cannot find os machine.";
         return -1;
     }
     new_domain.os_machine = config["os"]["machine"].as<std::string>();
 
     if (!config["os"]["type"].IsDefined()) {
-        std::cerr << "cannot find os type." << std::endl;
+        err = "cannot find os type.";
         return -1;
     }
     new_domain.os_type = config["os"]["type"].as<std::string>();
 
     if (!config["cpu"].IsDefined()) {
-        std::cerr << "cannot find cpu def." << std::endl;
+        err = "cannot find cpu def.";
         return -1;
     }
     new_domain.cpu_type = config["cpu"].as<std::string>();
     
     if (!config["disk"].IsDefined()) {
-        std::cerr << "cannot find disk definition." << std::endl;
+        err = "cannot find disk definition.";
         return -1;
     }
     if (!config["disk"]["driver"].IsDefined()) {
-        std::cerr << "cannot find disk driver." << std::endl;
+        err = "cannot find disk driver.";
         return -1;
     }
     new_domain.disk.driver = config["disk"]["driver"].as<std::string>();
 
     if (!config["disk"]["size"].IsDefined() || !config["disk"]["size"].IsScalar()) {
-        std::cerr << "cannot find disk size." << std::endl;
+        err = "cannot find disk size.";
         return -1;
     }
     new_domain.disk.disk_size = config["disk"]["size"].as<int>();
 
     if (!config["disk"]["path"].IsDefined()) {
-        std::cerr << "cannot find disk path." << std::endl;
+        err = "cannot find disk path.";
         return -1;
     }
     new_domain.disk.path = config["disk"]["path"].as<std::string>();
 
     if (!config["disk"]["hidden_path"].IsDefined()) {
-        std::cerr << "cannot find disk hidden_path." << std::endl;
+        err = "cannot find disk hidden_path.";
         return -1;
     }
     new_domain.disk.hidden_path = config["disk"]["hidden_path"].as<std::string>();
 
     if (!config["disk"]["active_path"].IsDefined()) {
-        std::cerr << "cannot find disk active_path." << std::endl;
+        err = "cannot find disk active_path.";
         return -1;
     }
     new_domain.disk.active_path = config["disk"]["active_path"].as<std::string>();
 
     if (!config["net"].IsDefined()) {
-        std::cerr << "cannot find net definition." << std::endl;
+        err = "cannot find net definition.";
         return -1;
     }
     if (!config["net"]["id"].IsDefined()) {
-        std::cerr << "cannot find net id." << std::endl;
+        err = "cannot find net id.";
         return -1;
     }
     new_domain.net.id = config["net"]["id"].as<std::string>();
 
     if (!config["net"]["br"].IsDefined()) {
-        std::cerr << "cannot find net br." << std::endl;
+        err = "cannot find net br.";
         return -1;
     }
     new_domain.net.br = config["net"]["br"].as<std::string>();
 
     if (!config["net"]["helper"].IsDefined()) {
-        std::cerr << "cannot find net helper." << std::endl;
+        err = "cannot find net helper.";
         return -1;
     }
     new_domain.net.helper = config["net"]["helper"].as<std::string>();
 
     if (!config["net"]["mac"].IsDefined()) {
-        std::cerr << "cannot find net mac." << std::endl;
+        err = "cannot find net mac.";
         return -1;
     }
     new_domain.net.mac = config["net"]["mac"].as<std::string>();
 
     if (!config["colo"].IsDefined()) {
-        std::cerr << "cannot find colo definition." << std::endl;
+        err = "cannot find colo definition.";
         return -1;
     }
     // if (!config["colo"]["ports"].IsDefined() || !config["colo"]["ports"].IsSequence()) {
-    //     std::cerr << "cannot find colo definition." << std::endl;
+    //     err = "cannot find colo definition.";
     //     return -1;
     // }
     // for (int i = 0; i < config["colo"]["ports"].size(); i++) {
@@ -251,7 +251,7 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     return 0;
 }
 
-int save_new_vm(const YAML::Node& vmdef, const domain& d) {
+int save_new_vm_file(const YAML::Node& vmdef, domain& d, std::string& err) {
     
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     YAML::Node dom;
@@ -264,13 +264,13 @@ int save_new_vm(const YAML::Node& vmdef, const domain& d) {
     if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
         sf["domains"].push_back(dom);
     } else if (!sf["domains"].IsSequence()) {
-        std::cerr << "wrong format in save file." << std::endl;
+        err = "wrong format in save file.";
         return -1;
     } else {
         bool redefined = false;
         for (int i = 0; i < sf["domains"].size(); i++) {
             if (d.name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
-                std::cout << "domain " << d.name << " redefined" << std::endl; 
+                err = "domain " + d.name + " redefined"; 
                 sf["domains"][i] = dom;
                 redefined = true;
             }
@@ -288,29 +288,31 @@ int save_new_vm(const YAML::Node& vmdef, const domain& d) {
     return 0;
 }
 
-int vm_define(const std::string& vm_def_filepath, domain& d) {
+int vm_define(const std::string& vm_def_filepath, domain& d, std::string& err) {
     YAML::Node defconfig = YAML::LoadFile(vm_def_filepath);
     if (!defconfig["name"]) {
-        std::cerr << "cannot parse vm name." << std::endl;
+        err = "cannot parse vm name.";
+        return -1;
     }
     std::string name = defconfig["name"].as<std::string>();
     if (name.compare("save") == 0) {
-        std::cerr << "cannot define vm with name save." << std::endl;
+        err = "cannot define vm with name 'save'.";
         return -1;
     }
-    std::cout << "start define vm " << name << std::endl;
-    if (vm_config_parse(defconfig, d) < 0) {
-        std::cerr << "cannot parse vm definition file." << std::endl;
+    
+    if (vm_config_parse(defconfig, d, err) < 0) {
+        
         return -1;
     }
-    if (save_new_vm(defconfig, d) < 0) {
-        std::cerr << "cannot save vm definition file." << std::endl;
+    
+    if (save_new_vm_file(defconfig, d, err) < 0) {
         return -1;
     }
+    
     return 0;
 }
 
-int vm_undefine(const std::string& domain_name) {
+int vm_undefine(const std::string& domain_name, std::string& err) {
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     YAML::Node domains;
     bool rm = false;
@@ -326,16 +328,16 @@ int vm_undefine(const std::string& domain_name) {
         }
     }
     if (colo_enable) {
-        std::cout << "remove colo file, domain name : " << domain_name << "." << std::endl;
+        // std::cout << "remove colo file, domain name : " << domain_name << "." << std::endl;
     }
     if (rm) {
         sf["domains"] = domains;
         std::ofstream fout(DEFAULT_SAVE_FILE);
         fout << sf;
         fout.close();
-        std::cout << domain_name << " has been redefined." << std::endl;
+        //std::cout << domain_name << " has been undefined." << std::endl;
     } else {
-        std::cout << "cannot find domain: " << domain_name << "." << std::endl;
+        err = "cannot find domain: " + domain_name + ".";
     }
 
     
@@ -350,7 +352,8 @@ int get_domain(const std::string& domain_name, domain& d) {
         if (domain_name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
             find = true;
             YAML::Node vmdef = YAML::LoadFile(sf["domains"][i]["path"].as<std::string>());
-            if (vm_config_parse(vmdef, d) < 0) {
+            std::string err;
+            if (vm_config_parse(vmdef, d, err) < 0) {
                 std::cerr << "cannot parse vm definition file." << std::endl;
                 return -1;
             }
@@ -391,23 +394,23 @@ int get_domain_config_file_path(const std::string& domain_name, std::string& pat
     return -1;
 }
 
-int get_domain_status(const std::string& domain_name) {
-    domain d;
-    if (get_domain(domain_name, d) < 0) {
-        std::cout << "can not get domain data." << std::endl;
-        return -1;
-    }
-    std::cout << "-------------------------------------------\n";
-    std::cout << "       Name: " << d.name << std::endl;
-    std::cout << "    OS Type: " << d.os_type << std::endl;
-    std::cout << "     Status: " << "running" << std::endl;
-    std::cout << "     CPU(s): " << d.vcpu << std::endl;
-    std::cout << "     Memory: " << d.memory_size << " MB" << std::endl;
-    std::cout << "  Disk Size: " << d.disk.disk_size << " MB" << std::endl;
-    std::cout << "Colo Status: " << "none" << std::endl;
-    std::cout << "-------------------------------------------\n";
-    return 0;
-}
+// int get_domain_status(const std::string& domain_name, string& msg) {
+//     domain d;
+//     if (get_domain(domain_name, d) < 0) {
+//         msg = "can not get domain data.";
+//         return -1;
+//     }
+//     msg += "-------------------------------------------\n";
+//     msg += "       Name: " + d.name + "\n";
+//     msg += "    OS Type: " + d.os_type + "\n";
+//     msg += "     Status: " + domain_status_to_str_map[rs.domains[domain_name].status] + "\n";
+//     msg += "     CPU(s): " + d.vcpu + "\n";
+//     msg += "     Memory: " + d.memory_size + " MB" + "\n";
+//     msg += "  Disk Size: " + d.disk.disk_size + " MB" + "\n";
+//     msg += "Colo Status: " + "none" + "\n";
+//     msg += "-------------------------------------------\n";
+//     return 0;
+// }
 
 
 int colo_enable(const std::string& domain_name) {

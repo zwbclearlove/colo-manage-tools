@@ -22,17 +22,17 @@ void rs_init();
 
 // colo_manage_tools interface
 colod_ret_val colod_connect_peer(std::string config_file_path);
-colod_ret_val colod_connect_status(int local);
+colod_ret_val colod_connect_status();
 colod_ret_val colod_define(std::string vm_file_path);
-colod_ret_val colod_undefine();
-colod_ret_val colod_list();
-colod_ret_val colod_start();
-colod_ret_val colod_destroy();
-colod_ret_val colod_colo_enable();
-colod_ret_val colod_colo_disable();
-colod_ret_val colod_vm_status();
+colod_ret_val colod_undefine(std::string domain_name);
+colod_ret_val colod_list(bool show_all);
+colod_ret_val colod_start(std::string domain_name);
+colod_ret_val colod_destroy(std::string domain_name);
+colod_ret_val colod_colo_enable(std::string domain_name);
+colod_ret_val colod_colo_disable(std::string domain_name);
+colod_ret_val colod_vm_status(std::string domain_name);
 colod_ret_val colod_set_params();
-colod_ret_val colod_do_failover();
+colod_ret_val colod_do_failover(std::string domain_name);
 
 
 // peer colod insterface

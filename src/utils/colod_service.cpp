@@ -1,6 +1,9 @@
 #include "colod_service.h"
 #include <iostream>
+#include <csignal>
 #include <colod.h>
+#include <domain.h>
+#include <runvm.h>
 #include "config_parser.h"
 #include "buttonrpc.hpp"
 
@@ -59,7 +62,7 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
 }
 
 
-colod_ret_val colod_connect_status(int local) {
+colod_ret_val colod_connect_status() {
     std::string ret_val;
     ret_val += "-------------------------------------------\n";
     ret_val += "  local status : " + colo_node_status_to_str_map[rs.current_status.local_status] + "\n";
@@ -96,72 +99,189 @@ colod_ret_val colod_connect_status(int local) {
 
 
 colod_ret_val colod_define(std::string vm_file_path) {
-    std::cout << "colod_define" << std::endl;
+    domain d;
+    std::string err;
+    if (vm_define(vm_file_path, d, err) < 0) {
+        return {
+            -1,
+            err,
+        };
+    }
+    domain_status ds;
+    ds.name = d.name;
+    ds.pid = -1;
+    ds.status = DOMAIN_SHUT_OFF;
+    ds.colo_enable = false;
+    rs.domains[d.name] = ds;
     return {
         0,
-        "",
+        "define domain : " + ds.name + " success.",
     };
 }
 
 
-colod_ret_val colod_undefine() {
-    std::cout << "colod_undefine" << std::endl;
+colod_ret_val colod_undefine(std::string domain_name) {
+    string err;
+    if (vm_undefine(domain_name, err) < 0) {
+        return {
+            -1,
+            err,
+        };
+    }
+    rs.domains.erase(domain_name);
     return {
         0,
-        "",
+        "domain : " + domain_name + " undefined",
+    };
+}
+
+DOMAIN_STATUS test_domain_status(const std::string& domain_name) {
+    domain_status ds = rs.domains[domain_name];
+    if (ds.pid == -1) {
+        return DOMAIN_SHUT_OFF;
+    }
+    if (kill(ds.pid, 0) < 0) {
+        rs.domains[domain_name].status =  DOMAIN_SHUT_OFF;
+        remove_domain_pid(domain_name);
+        return DOMAIN_SHUT_OFF;
+    }
+    return ds.status;
+}
+
+
+colod_ret_val colod_list(bool show_all) {
+    string ret_val;
+    if (rs.domains.empty()) {
+        return {
+            0,
+            "no defined domain.",
+        };
+    }
+    ret_val += "-------------------------------------------\n";
+    for(auto it = rs.domains.begin(); it != rs.domains.end(); it++) {
+        test_domain_status(it->first);
+        bool shutoff = (it->second.status == DOMAIN_SHUT_OFF);
+        if (!show_all && shutoff) continue;
+        ret_val += "       name : " + it->second.name + "\n";
+        ret_val += "     status : " + domain_status_to_str_map[it->second.status] + "\n";
+        if (it->second.colo_enable) {
+            ret_val += "colo enable : on\n";
+        } else {
+            ret_val += "colo enable : off\n";
+        }
+        
+        ret_val += "-------------------------------------------\n";
+    }
+
+    return {
+        0,
+        ret_val,
     };
 }
 
 
-colod_ret_val colod_list() {
-    std::cout << "colod_list" << std::endl;
+colod_ret_val colod_start(std::string domain_name) {
+    domain d;
+    shell_command cmd;
+    std::cout << "colo_start" << std::endl; 
+    if (test_domain_status(domain_name) != DOMAIN_SHUT_OFF) {
+        return {
+            -1,
+            "domain is already running.",
+        };
+    }
+
+    if (get_domain(domain_name, d) < 0) {
+        return {
+            -1,
+            "can not get domain data.",
+        };
+    }
+    // todo: get colo status from colod 
+    generate_vm_cmd(d, cmd);
+    // generate_pvm_cmd(d, cs, cmd);  
+    // generate_svm_cmd(d, cs, cmptmp);  
+    int pid = run_new_vm(d.name, cmd);
+    rs.domains[domain_name].pid = pid;
+    rs.domains[domain_name].status = DOMAIN_RUNNING;
     return {
         0,
-        "",
+        "domain " + domain_name + " start.",
     };
 }
 
 
-colod_ret_val colod_start() {
-    std::cout << "colod_start" << std::endl;
+colod_ret_val colod_destroy(std::string domain_name) {
+    if (test_domain_status(domain_name) == DOMAIN_SHUT_OFF) {
+        return {
+            -1,
+            "domain is shutoff.",
+        };
+    }
+    if (destroy_domain(domain_name) < 0) {
+        return {
+            -1,
+            "can not destroy domain.",
+        };
+    }
+    rs.domains[domain_name].pid = -1;
+    rs.domains[domain_name].status = DOMAIN_SHUT_OFF;
     return {
         0,
-        "",
+        "domain " + domain_name + " destroy.",
     };
 }
 
 
-colod_ret_val colod_destroy() {
-    std::cout << "colod_destroy" << std::endl;
+colod_ret_val colod_colo_enable(std::string domain_name) {
+    rs.domains[domain_name].colo_enable = true;
     return {
         0,
-        "",
+        "build colo domain " + domain_name + " success.",
+    };
+}
+
+colod_ret_val colod_colo_disable(std::string domain_name) {
+    if (colo_disable(domain_name) < 0) {
+        return {
+            -1,
+            "can not disable colo domain.",
+        };
+    }
+    rs.domains[domain_name].colo_enable = false;
+    return {
+        0,
+        "colo disable success",
     };
 }
 
 
-colod_ret_val colod_colo_enable() {
-    std::cout << "colod_colo_enable" << std::endl;
+colod_ret_val colod_vm_status(std::string domain_name) {
+    std::string msg;
+    domain d;
+    if (get_domain(domain_name, d) < 0) {
+        msg = "can not get domain data.";
+        return {
+            -1,
+            msg,
+        };
+    }
+    msg += "-------------------------------------------\n";
+    msg += "       Name: " + d.name + "\n";
+    msg += "    OS Type: " + d.os_type + "\n";
+    msg += "     Status: " + domain_status_to_str_map[rs.domains[domain_name].status] + "\n";
+    msg += "     CPU(s): " + std::to_string(d.vcpu) + "\n";
+    msg += "     Memory: " + std::to_string(d.memory_size) + " MB" + "\n";
+    msg += "  Disk Size: " + std::to_string(d.disk.disk_size) + " MB" + "\n";
+    if (rs.domains[domain_name].colo_enable) {
+        msg += "Colo Status: on\n";
+    } else {
+        msg += "Colo Status: off\n";
+    }
+    msg += "-------------------------------------------\n";
     return {
         0,
-        "",
-    };
-}
-
-colod_ret_val colod_colo_disable() {
-    std::cout << "colod_colo_disable" << std::endl;
-    return {
-        0,
-        "",
-    };
-}
-
-
-colod_ret_val colod_vm_status() {
-    std::cout << "colod_vm_status" << std::endl;
-    return {
-        0,
-        "",
+        msg,
     };
 }
 
@@ -174,7 +294,7 @@ colod_ret_val colod_set_params() {
 }
 
 
-colod_ret_val colod_do_failover() {
+colod_ret_val colod_do_failover(std::string domain_name) {
     std::cout << "colod_do_failover" << std::endl;
     return {
         0,

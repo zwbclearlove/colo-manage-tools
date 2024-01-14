@@ -27,8 +27,9 @@ src/utils/runvm.cpp src/utils/shell_command.cpp src/utils/colod_utils.cpp)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${LIBYAML} ${LIBZMQ} ${GLIB_LDFLAGS} utils)
 
-add_executable(colod src/colod.cpp src/utils/config_parser.cpp src/utils/colod_utils.cpp src/utils/colod_server.cpp
-src/utils/colod_service.cpp)
+add_executable(colod src/colod.cpp src/utils/config_parser.cpp src/utils/domain.cpp 
+src/utils/colod_utils.cpp src/utils/colod_server.cpp src/utils/shell_command.cpp
+src/utils/colod_service.cpp src/utils/runvm.cpp)
 target_link_libraries(colod ${LIBYAML} ${LIBZMQ})
 
 

@@ -61,13 +61,13 @@ typedef struct _domain
 
 
 
-int vm_define(const std::string& vm_def_filepath, domain& d);
-int vm_undefine(const std::string& domain_name);
+int vm_define(const std::string& vm_def_filepath, domain& d, std::string& err);
+int vm_undefine(const std::string& domain_name, std::string& err);
 int generate_vm_cmd(const domain& d, shell_command& cmd);
 int generate_pvm_cmd(const domain& d, const colo_status& cs, shell_command& cmd);
 int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd);
 int get_domain(const std::string& domain_name, domain& d);
 int get_domain_pid(const std::string& domain_name, int& pid);
-int get_domain_status(const std::string& domain_name);
+// int get_domain_status(const std::string& domain_name, std::string& msg);
 int colo_enable(const std::string& domain_name);
 int colo_disable(const std::string& domain_name);
