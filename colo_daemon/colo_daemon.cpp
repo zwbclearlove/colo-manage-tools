@@ -7,45 +7,86 @@
 #include <time.h>
 #include <stdio.h>
 
-static bool flag = true;
-void handler(int);
+#define PID_LENGTH 12
 
-int main()
+volatile sig_atomic_t _running = 1;
+ 
+void sigterm_handler(int arg)
 {
-    time_t t;
-    int fd;
-    if(-1 == daemon(0, 0))
-    {
-        printf("daemon error\n");
-        exit(1);
+    _running = 0;
+}
+
+int get_pid_by_name(char * process_name)
+{
+    char line[PID_LENGTH] = {'\0'};
+    char cmd[50] = {'\0'};
+    sprintf(cmd, "pidof %s", process_name);
+    FILE * command = popen(cmd,"r");
+    fgets(line, PID_LENGTH, command); 
+    pid_t pid = strtoul(line, NULL, 10);
+    pclose(command);
+    return pid;
+}
+
+int colod_pretest() {
+    pid_t pid = get_pid_by_name("colod");
+    if (pid == 0) {
+        printf("please start colod.\n");
+        return -1;
     }
-    struct sigaction act;
-    act.sa_handler = handler;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    if(sigaction(SIGQUIT, &act, NULL))
-    {
-        printf("sigaction error.\n");
-        exit(0);
-    }
-    while(flag)
-    {
-        fd = open("/home/ubuntu/daemon.log", 
-        O_WRONLY | O_CREAT | O_APPEND, 0644);
-        if(fd == -1)
-        {
-            printf("open error\n");
-        }
-        t = time(0);
-        char *buf = asctime(localtime(&t));
-        write(fd, buf, strlen(buf));
-        close(fd);
-        sleep(60);
-    }
+    printf("colod is running with pid : %d\n", pid);
     return 0;
 }
-void handler(int sig)
+ 
+int main()
 {
-    printf("I got a signal %d\nI'm quitting.\n", sig);
-    flag = false;
+    pid_t pc;
+    time_t t;
+    int i, fd, len;
+    char *buf;
+    if (colod_pretest() < 0) {
+        return 0;
+    }
+
+    
+    
+
+    pc = fork(); //第一步
+    if(pc < 0)                                                   
+    {
+        printf("error fork\n");
+        exit(1);
+    }
+    else if(pc > 0) {
+        printf("colod now is running with pid = %d.\n", pc);
+        exit(0);
+    }
+
+    setsid(); //第二步
+    chdir("/"); //第三步
+    umask(0); //第四步
+    if ((fd = open("/dev/null", O_RDWR, 0)) != -1) {
+        dup2(fd, STDIN_FILENO);
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+
+        if (fd > STDERR_FILENO) {
+            close(fd);
+        }
+    }
+    signal(SIGTERM, sigterm_handler);
+    while(_running)
+    {
+        if((fd = open("/tmp/dameon.log", O_CREAT | O_RDWR | O_APPEND, 0666)) < 0) \
+        {
+            perror("open");
+            exit(1);
+        }
+        t = time(0);
+        buf = asctime(localtime(&t));
+        write(fd, buf, strlen(buf));
+        close(fd);
+        sleep(10); 
+    }
+    return 0;
 }

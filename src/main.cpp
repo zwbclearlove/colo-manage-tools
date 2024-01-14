@@ -6,14 +6,14 @@
 #include "domain.h"
 #include "config_parser.h"
 #include "runvm.h"
+#include "colod.h"
+#include "buttonrpc.hpp"
 
 
-int main(int argc, char *argv[]) {
-    
-#ifdef DEBUG
-    std::cout << "in debug mode" << std::endl;
-#endif
-
+int main(int argc, char *argv[]) {  
+    if (colod_pretest() < 0) {
+        return 0;
+    }
     cmdline::parser cmd_parser;
     cmd_parser.add<std::string>("command-type", 't', "command type", true, "");
     cmd_parser.add<std::string>("vm-file", 'v', "vm definition file", false, "");
@@ -30,6 +30,10 @@ int main(int argc, char *argv[]) {
     // const std::string password = config["password"].as<std::string>();
     // std::cout << username << "---" << password << std::endl;
     cmd_parser.parse_check(argc, argv);
+
+    buttonrpc client;
+	client.as_client("192.168.10.2", 5555);
+	client.set_timeout(2000);
 
     std::string cur_command_type_str = cmd_parser.get<std::string>("command-type");
 
@@ -73,6 +77,9 @@ int main(int argc, char *argv[]) {
                 std::cout << "cannot get connect status" << std::endl;
                 return 0;
             }
+
+            std::string ret = client.call<std::string>("testfun", "hhhhhhhhh").val();
+	        std::cout << "get testfun ret : " << ret << std::endl;
         }
         break;
     case COMMAND_DEFINE:
@@ -230,5 +237,5 @@ int main(int argc, char *argv[]) {
     }
     
 
-    return 0;
+    exit(0);
 }

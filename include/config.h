@@ -1,5 +1,4 @@
 #pragma once
-#include "commandline.h"
 #include <unordered_map>
 
 #define DEFAULT_CONFIG_FILE_PATH "/home/ubuntu/config/config.yaml"
@@ -68,4 +67,19 @@ static std::unordered_map<std::string, COLO_COMMAND_TYPE> command_type_map = {
     {"vm-status", COMMAND_VM_STATUS},
     {"set-params", COMMAND_SET_PARAMS},
     {"do-failover", COMMAND_DO_FAILOVER},
+};
+
+static std::unordered_map<COLO_COMMAND_TYPE, std::string> colo_cmd_type_to_str_map = {
+    {COMMAND_CONNECT_PEER, "connect-peer"},
+    {COMMAND_CONNECT_STATUS, "connect-status"}, 
+    {COMMAND_DEFINE, "define"},
+    {COMMAND_UNDEFINE, "undefine"},
+    {COMMAND_LIST, "list"}, 
+    {COMMAND_START, "start"},
+    {COMMAND_DESTROY, "destroy"},
+    {COMMAND_COLO_ENABLE, "colo-enable"},
+    {COMMAND_COLO_DISABLE, "colo-disable"},
+    {COMMAND_VM_STATUS, "vm-status"},
+    {COMMAND_SET_PARAMS, "set-params"},
+    {COMMAND_DO_FAILOVER, "do-failover"},
 };

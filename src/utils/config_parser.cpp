@@ -1,6 +1,7 @@
 #include "config_parser.h"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
+#include <iostream>
 
 
 int parse_config_file(const std::string& config_filepath, colo_status& cs) {

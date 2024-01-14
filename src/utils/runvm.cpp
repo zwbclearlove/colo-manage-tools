@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <glib-2.0/glib.h>
 #include "shell_command.h"
 #include "config_parser.h"
 
