@@ -439,6 +439,30 @@ namespace zmq
             return zmq_ctx_get (ptr, option_);
         }
 
+        // inline ~context_t () ZMQ_NOTHROW
+        // {
+        //     if (!ptr)
+        //     {
+        //         return;
+        //     }
+
+        //     int rc = zmq_ctx_destroy (ptr);
+        //     ptr = NULL;
+        //     ZMQ_ASSERT (rc == 0);
+        // }
+
+        // inline void close() ZMQ_NOTHROW
+        // {
+        //     if (!ptr)
+        //     {
+        //         return;
+        //     }
+
+        //     int rc = zmq_ctx_destroy (ptr);
+        //     ptr = NULL;
+        //     ZMQ_ASSERT (rc == 0);
+        // }
+        
         inline ~context_t () ZMQ_NOTHROW
         {
             close();

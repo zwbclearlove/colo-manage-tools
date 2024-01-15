@@ -8,12 +8,18 @@
 #include "buttonrpc.hpp"
 
 static run_status rs;
+static buttonrpc remote_client;
 
 void rs_init() {
     rs.current_status.local_status = COLO_NODE_NONE;
     if (domains_init(rs.domains) < 0) {
         return;
     }
+}
+
+void set_remote_client(std::string ip, int port) {
+    remote_client.as_client(ip, port);
+    remote_client.set_timeout(2000);
 }
 
 // colo_manage_tools interface
@@ -27,19 +33,17 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
     }
     
     // todo: send to colod
-    buttonrpc remote_client;
-    remote_client.as_client(rs.current_status.peer_ip, 5678);
-    remote_client.set_timeout(2000);
+    set_remote_client(rs.current_status.peer_ip, 5678);
+    
     
     auto ret = remote_client.call<colod_ret_val>("peer-save-status", rs.current_status);
-
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
         return {
             -1,
             "connect to peer colod timeout.",
         };
     }
-
+    
     colod_ret_val crv = ret.val();
     if (crv.code < 0) {
         return {
@@ -47,8 +51,8 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
             crv.msg,
         };
     }
-
-
+    
+    std::cout << "colod_save_peer_status success" << std::endl;
     if (save_colo_status(rs.current_status) < 0) {
         return {
             -1,
