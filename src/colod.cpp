@@ -34,7 +34,8 @@ int colod_daemon() {
     uid = getuid();
 
     if (setuid(0) < 0) {
-        std::cout << "switch to root user failed." << std::endl;
+        std::cout << "switch to root user failed, please run with sudo." << std::endl;
+        exit(0);
     }
     
     setsid(); //第二步
