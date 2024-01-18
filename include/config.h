@@ -123,3 +123,30 @@ static std::unordered_map<DOMAIN_STATUS, std::string> domain_status_to_str_map =
     {DOMAIN_COLO_ENABLED, "colo-enabled"},
     {DOMAIN_ERROR, "error"},
 };
+
+enum COLO_DOMAIN_STATUS {
+    COLO_DOMAIN_NONE,
+    COLO_DOMAIN_PRIMARY,
+    COLO_DOMAIN_SECONDARY,
+    COLO_DOMAIN_FAILOVER,
+    COLO_DOMAIN_DEGRADE,
+    COLO_DOMAIN_DEAD,
+};
+
+static std::unordered_map<std::string, COLO_DOMAIN_STATUS> colo_domain_status_map = {
+    {"none", COLO_DOMAIN_NONE},
+    {"primary", COLO_DOMAIN_PRIMARY}, 
+    {"secondary", COLO_DOMAIN_SECONDARY},
+    {"failover", COLO_DOMAIN_FAILOVER},
+    {"degrade", COLO_DOMAIN_DEGRADE},
+    {"dead", COLO_DOMAIN_DEAD},
+};
+
+static std::unordered_map<COLO_DOMAIN_STATUS, std::string> colo_domain_status_to_str_map = {
+    {COLO_DOMAIN_NONE, "none"},
+    {COLO_DOMAIN_PRIMARY, "primary"}, 
+    {COLO_DOMAIN_SECONDARY, "secondary"},
+    {COLO_DOMAIN_FAILOVER, "failover"},
+    {COLO_DOMAIN_DEGRADE, "degrade"},
+    {COLO_DOMAIN_DEAD, "dead"},
+};

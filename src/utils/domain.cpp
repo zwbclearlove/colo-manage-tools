@@ -439,17 +439,14 @@ int colo_enable(const std::string& domain_name) {
     }
     std::cout << "transfer domain config file success." << std::endl;
     // transfer disk image 
-    std::string src_disk_file = d.disk.path;
-    std::string dst_disk_file = cs.peer_user + "@" + cs.peer_ip + ":" + src_disk_file;
-    std::cout << "scp " << src_disk_file << " " << dst_disk_file << std::endl;
-    if (transfer_file(src_disk_file, dst_disk_file) < 0) {
-        std::cout << "transfer domain disk file failed." << std::endl;
-    }
-    std::cout << "transfer domain disk file success." << std::endl;
-    if (set_domain_colo_enable(domain_name) < 0) {
-        std::cout << "can not set config file." << std::endl;
-        return -1;
-    }
+    // std::string src_disk_file = d.disk.path;
+    // std::string dst_disk_file = cs.peer_user + "@" + cs.peer_ip + ":" + src_disk_file;
+    // std::cout << "scp " << src_disk_file << " " << dst_disk_file << std::endl;
+    // if (transfer_file(src_disk_file, dst_disk_file) < 0) {
+    //     std::cout << "transfer domain disk file failed." << std::endl;
+    // }
+    // std::cout << "transfer domain disk file success." << std::endl;
+    
     std::cout << "build colo env success." << std::endl;
     return 0;
 }

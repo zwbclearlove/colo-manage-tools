@@ -115,14 +115,14 @@ int get_domain_list(bool show_all) {
     return 0;
 }
 
-int domains_init(std::unordered_map<std::string, domain_status>& ds_map) {
+int domains_init(std::unordered_map<std::string, colod_domain_status>& ds_map) {
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
         return 0;
     }
     std::cout << "-------------------------------------------\n";
     for (int i = 0; i < sf["domains"].size(); i++) {
-        domain_status ds;
+        colod_domain_status ds;
         ds.name = sf["domains"][i]["name"].as<std::string>();
         ds.pid = sf["domains"][i]["pid"].as<int>();
         ds.colo_enable = sf["domains"][i]["colo_enable"].as<bool>();

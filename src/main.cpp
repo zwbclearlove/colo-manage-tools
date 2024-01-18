@@ -213,22 +213,36 @@ int main(int argc, char *argv[]) {
         break;
     case COMMAND_COLO_ENABLE:
         {
+            colod_ret_val crv;
             if (!cmd_parser.exist("domain")) {
                 std::cout << "no domain name." << std::endl;
                 return 0;
             }
             std::string name = cmd_parser.get<std::string>("domain");
-            if (colo_enable(name) < 0) {
-                std::cout << "can not enable colo." << std::endl;
-            }    
-            auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_COLO_ENABLE], name);
+            auto ret = local_client.call<colod_ret_val>("domain-test", name);
 
             if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
                 std::cout << "connect to colod timeout." << std::endl;
                 goto cleanup;
             }
 
-            colod_ret_val crv = ret.val();
+            crv = ret.val();
+            if (crv.msg.compare("shutoff") != 0) {
+                std::cout << "canot colo enable a running domain." << std::endl;
+                goto cleanup;
+            }
+
+            if (colo_enable(name) < 0) {
+                std::cout << "can not enable colo." << std::endl;
+            }    
+            ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_COLO_ENABLE], name);
+
+            if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+                std::cout << "connect to colod timeout." << std::endl;
+                goto cleanup;
+            }
+
+            crv = ret.val();
             if (crv.code < 0) {
                 std::cout << crv.msg << std::endl;
                 goto cleanup;

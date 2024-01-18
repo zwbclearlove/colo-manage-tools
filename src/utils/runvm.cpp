@@ -54,7 +54,7 @@ int run_shell_command_async(shell_command& cmd) {
     return pid;
 }
 
-int run_shell_command_sync(const shell_command& cmd) {
+int run_shell_command_sync(shell_command& cmd) {
     pid_t pid;
     int status;
     pid = fork();
@@ -71,16 +71,13 @@ int run_shell_command_sync(const shell_command& cmd) {
         }
 
     } else if (pid == 0) {
+        int fd;
+        setsid(); //第二步
+        chdir("/"); //第三步
+        umask(0); //第四步
         std::vector<char*> vchar;
-        for (const auto& str : cmd.args) {
-            vchar.push_back(const_cast<char*>(str.c_str()));
-        }
-        char **arg = new char*[cmd.nargs + 1];
-        for (int i = 0; i < cmd.nargs; i++) {
-            arg[i] = vchar[i];
-        }
-        arg[cmd.nargs] = NULL;
-        execvp(cmd.binaryPath.c_str(), arg);
+        vchar = strlist(cmd.args);
+        execvp(cmd.binaryPath.c_str(), vchar.data());
         perror("error exec");
     }
     return pid;

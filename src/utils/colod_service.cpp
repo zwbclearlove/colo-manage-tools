@@ -1,7 +1,7 @@
 #include "colod_service.h"
 #include <iostream>
 #include <csignal>
-#include <colod.h>
+
 #include <domain.h>
 #include <runvm.h>
 #include "config_parser.h"
@@ -111,11 +111,13 @@ colod_ret_val colod_define(std::string vm_file_path) {
             err,
         };
     }
-    domain_status ds;
+    colod_domain_status ds;
     ds.name = d.name;
     ds.pid = -1;
     ds.status = DOMAIN_SHUT_OFF;
     ds.colo_enable = false;
+    ds.colo_status = COLO_DOMAIN_NONE;
+    ds.config_file_path = DEFAULT_SAVE_PATH + ds.name + ".yaml";
     rs.domains[d.name] = ds;
     return {
         0,
@@ -140,7 +142,7 @@ colod_ret_val colod_undefine(std::string domain_name) {
 }
 
 DOMAIN_STATUS test_domain_status(const std::string& domain_name) {
-    domain_status ds = rs.domains[domain_name];
+    colod_domain_status ds = rs.domains[domain_name];
     if (ds.pid == -1) {
         return DOMAIN_SHUT_OFF;
     }
@@ -170,6 +172,7 @@ colod_ret_val colod_list(bool show_all) {
         ret_val += "     status : " + domain_status_to_str_map[it->second.status] + "\n";
         if (it->second.colo_enable) {
             ret_val += "colo enable : on\n";
+            ret_val += "colo status : " + colo_domain_status_to_str_map[it->second.colo_status];
         } else {
             ret_val += "colo enable : off\n";
         }
@@ -184,7 +187,7 @@ colod_ret_val colod_list(bool show_all) {
 }
 
 
-colod_ret_val colod_start(std::string domain_name) {
+colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     domain d;
     shell_command cmd;
     std::cout << "colo_start" << std::endl; 
@@ -202,12 +205,18 @@ colod_ret_val colod_start(std::string domain_name) {
         };
     }
     // todo: get colo status from colod 
-    generate_vm_cmd(d, cmd);
-    // generate_pvm_cmd(d, cs, cmd);  
-    // generate_svm_cmd(d, cs, cmptmp);  
-    int pid = run_new_vm(d.name, cmd);
-    rs.domains[domain_name].pid = pid;
-    rs.domains[domain_name].status = DOMAIN_RUNNING;
+    if (colo_enable) {
+        return {
+            0,
+            "colo domain " + domain_name + " start.",
+        };
+
+    } else {
+        generate_vm_cmd(d, cmd);
+        int pid = run_new_vm(d.name, cmd);
+        rs.domains[domain_name].pid = pid;
+        rs.domains[domain_name].status = DOMAIN_RUNNING;    
+    }
     return {
         0,
         "domain " + domain_name + " start.",
@@ -238,11 +247,59 @@ colod_ret_val colod_destroy(std::string domain_name) {
 
 
 colod_ret_val colod_colo_enable(std::string domain_name) {
+    std::string err;
+    if (rs.current_status.local_status == COLO_NODE_NONE ||
+        rs.current_status.local_status == COLO_NODE_ERROR) {
+        return {
+            -1,
+            "please connect peer colod first.",
+        };
+    }
+    //todo: send domain info to peer colod 
     rs.domains[domain_name].colo_enable = true;
+    if (rs.current_status.local_status == COLO_NODE_PRIMARY) {
+        rs.domains[domain_name].colo_status = COLO_DOMAIN_PRIMARY;
+    } else if (rs.current_status.local_status == COLO_NODE_SECONDARY) {
+        rs.domains[domain_name].colo_status = COLO_DOMAIN_SECONDARY;
+    }
+    auto ret = remote_client.call<colod_ret_val>("peer-save-domain", rs.domains[domain_name]);
+    if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+        err = "connect to peer colod timeout.";
+        rs.domains[domain_name].colo_enable = false;
+        rs.current_status.local_status == COLO_NODE_NONE;
+        return {
+            -1,
+            err,
+        };
+    }
+    
+    colod_ret_val crv = ret.val();
+    if (crv.code < 0) {
+        err = crv.msg;
+        rs.domains[domain_name].colo_enable = false;
+        rs.current_status.local_status == COLO_NODE_NONE;
+        return {
+            -1,
+            err,
+        };
+    }
+
+    
+     
+    if (set_domain_colo_enable(domain_name) < 0) {
+        err = "can not set config file.";
+        rs.domains[domain_name].colo_enable = false;
+        rs.current_status.local_status == COLO_NODE_NONE;
+        return {
+            -1,
+            err,
+        };
+    }
     return {
         0,
         "build colo domain " + domain_name + " success.",
     };
+    
 }
 
 colod_ret_val colod_colo_disable(std::string domain_name) {
@@ -309,20 +366,37 @@ colod_ret_val colod_do_failover(std::string domain_name) {
 
 
 
+
 // peer colod insterface
-colod_ret_val colod_connect_test() {
-    
+
+colod_ret_val peer_colod_connect_test_reply() {
     return {
         0,
-        "fine",
+        colo_node_status_to_str_map[rs.current_status.local_status],
     };
 }
 
-colod_ret_val colod_domain_test() {
+colod_ret_val peer_colod_connect_test() {
+    auto ret = remote_client.call<colod_ret_val>("connect-reply");
+    if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+        return {
+            -1,
+            "connect to peer colod timeout.",
+        };
+    }
     
+    colod_ret_val crv = ret.val();
     return {
         0,
-        "",
+        crv.msg,
+    };
+}
+
+colod_ret_val colod_domain_test(std::string domain_name) {
+    DOMAIN_STATUS ds = test_domain_status(domain_name);
+    return {
+        0,
+        domain_status_to_str_map[ds],
     };
 }
 
@@ -344,5 +418,20 @@ colod_ret_val peer_colod_save_status(colo_status cs) {
     return {
         0,
         "peer colod save status success.",
+    };
+}
+
+colod_ret_val peer_colod_save_domain(colod_domain_status ds) {
+    colod_domain_status nds = ds;
+    if (ds.colo_enable) {
+        nds.colo_status = (ds.colo_status == COLO_DOMAIN_PRIMARY)
+         ? COLO_DOMAIN_SECONDARY : COLO_DOMAIN_PRIMARY;
+    }
+
+    rs.domains[ds.name] = nds;  
+    
+    return {
+        0,
+        "peer colod save domain success.",
     };
 }

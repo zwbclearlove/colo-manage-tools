@@ -28,10 +28,11 @@ void ColodServer::server_init() {
     this->brpc.bind(colo_cmd_type_to_str_map[COMMAND_VM_STATUS], colod_vm_status);
     this->brpc.bind(colo_cmd_type_to_str_map[COMMAND_SET_PARAMS], colod_set_params);
     this->brpc.bind(colo_cmd_type_to_str_map[COMMAND_DO_FAILOVER], colod_do_failover);
-    this->brpc.bind("connect-test", colod_connect_test);
+    this->brpc.bind("connect-test", peer_colod_connect_test);
+    this->brpc.bind("connect-reply", peer_colod_connect_test_reply);
     this->brpc.bind("domain-test", colod_domain_test);
     this->brpc.bind("peer-save-status", peer_colod_save_status);
-    
+    this->brpc.bind("peer-save-domain", peer_colod_save_domain);
 }
 
 void ColodServer::run() {
