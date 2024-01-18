@@ -25,6 +25,10 @@ int colod_pretest() {
     return 0;
 }
 
+int colod_restart() {
+    return 0;
+}
+
 int colod_test_exist() {
     char name[10] = "colod";
     pid_t pid = get_pid_by_name(name);

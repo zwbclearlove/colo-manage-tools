@@ -77,22 +77,19 @@ colod_ret_val colod_connect_status() {
     ret_val += "     peer user : " + rs.current_status.peer_user + "\n";
     ret_val += "peer file path : " + rs.current_status.peer_file_path + "\n";
     
-    // buttonrpc remote_client;
-    // remote_client.as_client(rs.current_status.peer_ip, 5678);
-    // remote_client.set_timeout(2000);
     
-    // auto ret = remote_client.call<colod_ret_val>("connect-test");
+    auto ret = remote_client.call<colod_ret_val>("connect-test");
 
-    // if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
-    //     ret_val << " peer status : " << "inactive" << std::endl;
-    // } else {
-    //     colod_ret_val crv = ret.val();
-    //     if (crv.code < 0) {
-    //         ret_val << " peer status : " << "wrong" << std::endl;
-    //     } else {
-    //         ret_val << " peer status : " << "active" << std::endl;
-    //     }
-    // }
+    if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+        ret_val += " peer status : inactive\n";
+    } else {
+        colod_ret_val crv = ret.val();
+        if (crv.code < 0) {
+            ret_val += " peer status : wrong\n";
+        } else {
+            ret_val += " peer status : active\n";
+        }
+    }
     
     ret_val += "-------------------------------------------\n";
     return {

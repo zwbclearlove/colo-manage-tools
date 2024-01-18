@@ -24,6 +24,8 @@ int main(int argc, char *argv[]) {
     cmd_parser.add<int>("checkpoint-time", '\0', "checkpoint time", false, 1000);
     cmd_parser.add<int>("compare-timeout", '\0', "compare timeout", false, 1000);
     cmd_parser.add<int>("max_queue_size", '\0', "max_queue_size", false, 65535);
+    cmd_parser.add("restart-colod", 'r', "restart colod");
+    
     
 
     // YAML::Node config = YAML::LoadFile("/home/ubuntu/config/config.yaml");
@@ -31,6 +33,9 @@ int main(int argc, char *argv[]) {
     // const std::string password = config["password"].as<std::string>();
     // std::cout << username << "---" << password << std::endl;
     cmd_parser.parse_check(argc, argv);
+    if (cmd_parser.exist("restart-colod")) {
+        //restart colod
+    }
 
     buttonrpc local_client;
 	local_client.as_client("127.0.0.1", 5678);
@@ -172,7 +177,7 @@ int main(int argc, char *argv[]) {
             }
             bool colo = cmd_parser.exist("colo");
             std::string name = cmd_parser.get<std::string>("domain");
-            auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_START], name);
+            auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_START], name, colo);
 
             if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
                 std::cout << "connect to colod timeout." << std::endl;
