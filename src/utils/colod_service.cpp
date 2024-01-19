@@ -436,6 +436,12 @@ colod_ret_val peer_colod_save_status(colo_status cs) {
     rs.current_status.peer_ip = cs.host_ip;
     rs.current_status.peer_user = cs.host_user;
     rs.current_status.peer_file_path = cs.host_file_path;
+    if (save_colo_status(rs.current_status) < 0) {
+        return {
+            -1,
+            "cannot save colo status",
+        };
+    }
     peer_init = true;
     return {
         0,
