@@ -261,6 +261,7 @@ int save_new_vm_file(const YAML::Node& vmdef, domain& d, std::string& err) {
     dom["pid"] = -1;
     dom["status"] = "shutoff";
     dom["colo_enable"] = false;
+    dom["colo_status"] = "none";
     if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
         sf["domains"].push_back(dom);
     } else if (!sf["domains"].IsSequence()) {

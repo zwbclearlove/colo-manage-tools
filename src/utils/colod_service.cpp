@@ -169,7 +169,7 @@ colod_ret_val colod_list(bool show_all) {
         ret_val += "     status : " + domain_status_to_str_map[it->second.status] + "\n";
         if (it->second.colo_enable) {
             ret_val += "colo enable : on\n";
-            ret_val += "colo status : " + colo_domain_status_to_str_map[it->second.colo_status];
+            ret_val += "colo status : " + colo_domain_status_to_str_map[it->second.colo_status] + "\n";
         } else {
             ret_val += "colo enable : off\n";
         }

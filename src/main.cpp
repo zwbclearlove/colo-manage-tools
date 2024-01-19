@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
     cmd_parser.parse_check(argc, argv);
     if (cmd_parser.exist("restart-colod")) {
         //restart colod
+        std::cout << "restart colod." << std::endl;
+        return 0;
     }
 
     buttonrpc local_client;
