@@ -2,6 +2,8 @@
 #include "config.h"
 #include "Serializer.hpp"
 #include <unordered_map>
+#include <stdlib.h>
+#include <stdio.h>
 
 struct colod_domain_status {
     pid_t pid;
@@ -35,3 +37,9 @@ struct run_status
 
 int colod_pretest();
 int colod_test_exist();
+
+
+inline void LOG(const std::string& log) {
+    printf("%s %s : , File: %s, line: %05d, %s\n",
+     __DATE__, __TIME__, __FILE__, __LINE__, log.c_str());
+}

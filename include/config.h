@@ -32,6 +32,7 @@ static std::unordered_map<COLO_NODE_STATUS, std::string> colo_node_status_to_str
 
 struct colo_status {
     COLO_NODE_STATUS local_status;
+    int colod_port;
     std::string host_ip;
     std::string host_user;
     std::string host_file_path;
@@ -41,12 +42,12 @@ struct colo_status {
 
     // must implement
 	friend Serializer& operator >> (Serializer& in, colo_status& cs) {
-		in >> cs.local_status >> cs.host_ip >> cs.host_user >> cs.host_file_path
+		in >> cs.local_status >> cs.colod_port >> cs.host_ip >> cs.host_user >> cs.host_file_path
            >> cs.peer_ip >> cs.peer_user >> cs.peer_file_path;
 		return in;
 	}
 	friend Serializer& operator << (Serializer& out, colo_status cs) {
-		out << cs.local_status << cs.host_ip << cs.host_user << cs.host_file_path
+		out << cs.local_status << cs.colod_port << cs.host_ip << cs.host_user << cs.host_file_path
            << cs.peer_ip << cs.peer_user << cs.peer_file_path;
 		return out;
 	} 

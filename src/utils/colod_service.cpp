@@ -27,16 +27,16 @@ void set_remote_client(std::string ip, int port) {
 
 // colo_manage_tools interface
 colod_ret_val colod_connect_peer(std::string config_file_path) {
-    std::cout << "colod_connect_peer" << std::endl;
+    LOG("colod_connect_peer");
     if (parse_config_file(config_file_path, rs.current_status) < 0) {
         return {
             -1,
             "can not parse config file.",
         };
     }
-    
+    LOG("current peer status : " + rs.current_status.peer_ip);
     // todo: send to colod
-    set_remote_client(rs.current_status.peer_ip, 5678);
+    set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
     remote_client_init = true;
     
     auto ret = remote_client.call<colod_ret_val>("peer-save-status", rs.current_status);
@@ -88,7 +88,7 @@ colod_ret_val colod_connect_status() {
     ret_val += "peer file path : " + rs.current_status.peer_file_path + "\n";
     
     if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, 5678);
+        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
     }
     auto ret = remote_client.call<colod_ret_val>("connect-test");
 
@@ -273,7 +273,7 @@ colod_ret_val colod_colo_enable(std::string domain_name) {
         rs.domains[domain_name].colo_status = COLO_DOMAIN_SECONDARY;
     }
     if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, 5678);
+        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
     }
     auto ret = remote_client.call<colod_ret_val>("peer-save-domain", rs.domains[domain_name]);
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
@@ -398,7 +398,7 @@ colod_ret_val peer_colod_connect_test() {
         };
     }
     if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, 5678);
+        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
     }
     auto ret = remote_client.call<colod_ret_val>("connect-reply");
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
