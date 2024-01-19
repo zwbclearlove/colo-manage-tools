@@ -90,18 +90,14 @@ colod_ret_val colod_connect_status() {
     if (!remote_client_init) {
         set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
     }
-    auto ret = remote_client.call<colod_ret_val>("connect-test");
+    auto ret = remote_client.call<colod_ret_val>("connect-reply");
 
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
         ret_val += " peer status : inactive\n";
         peer_init = false;
     } else {
         colod_ret_val crv = ret.val();
-        if (crv.code < 0) {
-            ret_val += " peer status : wrong\n";
-        } else {
-            ret_val += " peer status : active\n";
-        }
+        ret_val += " peer status : " + crv.msg + "\n";
     }
     
     ret_val += "-------------------------------------------\n";
