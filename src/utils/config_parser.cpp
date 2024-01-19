@@ -127,6 +127,7 @@ int domains_init(std::unordered_map<std::string, colod_domain_status>& ds_map) {
         ds.pid = sf["domains"][i]["pid"].as<int>();
         ds.colo_enable = sf["domains"][i]["colo_enable"].as<bool>();
         ds.status = domain_status_map[sf["domains"][i]["name"].as<std::string>()];
+        ds.colo_status = colo_domain_status_map[sf["domains"][i]["colo_status"].as<std::string>()];
         ds_map[ds.name] = ds;
     }
     return 0;

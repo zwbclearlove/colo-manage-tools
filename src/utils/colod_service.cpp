@@ -9,12 +9,15 @@
 
 static run_status rs;
 static buttonrpc remote_client;
-
+static bool remote_client_init;
+static bool peer_init;
 void rs_init() {
     rs.current_status.local_status = COLO_NODE_NONE;
+    peer_init = false;
     if (domains_init(rs.domains) < 0) {
         return;
     }
+    
 }
 
 void set_remote_client(std::string ip, int port) {
@@ -34,7 +37,7 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
     
     // todo: send to colod
     set_remote_client(rs.current_status.peer_ip, 5678);
-    
+    remote_client_init = true;
     
     auto ret = remote_client.call<colod_ret_val>("peer-save-status", rs.current_status);
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
@@ -59,6 +62,7 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
             "cannot save colo status",
         };
     }
+    peer_init = true;
     return {
         0,
         "connect peer success.",
@@ -67,6 +71,12 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
 
 
 colod_ret_val colod_connect_status() {
+    if (!peer_init) {
+        return {
+            -1,
+            "connect-peer first",
+        };
+    }
     std::string ret_val;
     ret_val += "-------------------------------------------\n";
     ret_val += "  local status : " + colo_node_status_to_str_map[rs.current_status.local_status] + "\n";
@@ -77,11 +87,14 @@ colod_ret_val colod_connect_status() {
     ret_val += "     peer user : " + rs.current_status.peer_user + "\n";
     ret_val += "peer file path : " + rs.current_status.peer_file_path + "\n";
     
-    
+    if (!remote_client_init) {
+        set_remote_client(rs.current_status.peer_ip, 5678);
+    }
     auto ret = remote_client.call<colod_ret_val>("connect-test");
 
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
         ret_val += " peer status : inactive\n";
+        peer_init = false;
     } else {
         colod_ret_val crv = ret.val();
         if (crv.code < 0) {
@@ -259,11 +272,15 @@ colod_ret_val colod_colo_enable(std::string domain_name) {
     } else if (rs.current_status.local_status == COLO_NODE_SECONDARY) {
         rs.domains[domain_name].colo_status = COLO_DOMAIN_SECONDARY;
     }
+    if (!remote_client_init) {
+        set_remote_client(rs.current_status.peer_ip, 5678);
+    }
     auto ret = remote_client.call<colod_ret_val>("peer-save-domain", rs.domains[domain_name]);
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
         err = "connect to peer colod timeout.";
         rs.domains[domain_name].colo_enable = false;
         rs.current_status.local_status == COLO_NODE_NONE;
+        peer_init = false;
         return {
             -1,
             err,
@@ -374,8 +391,18 @@ colod_ret_val peer_colod_connect_test_reply() {
 }
 
 colod_ret_val peer_colod_connect_test() {
+    if (!peer_init) {
+        return {
+            0,
+            "connect-peer first.",
+        };
+    }
+    if (!remote_client_init) {
+        set_remote_client(rs.current_status.peer_ip, 5678);
+    }
     auto ret = remote_client.call<colod_ret_val>("connect-reply");
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+        peer_init = false;
         return {
             -1,
             "connect to peer colod timeout.",
@@ -411,7 +438,7 @@ colod_ret_val peer_colod_save_status(colo_status cs) {
     rs.current_status.peer_ip = cs.host_ip;
     rs.current_status.peer_user = cs.host_user;
     rs.current_status.peer_file_path = cs.host_file_path;
-    
+    peer_init = true;
     return {
         0,
         "peer colod save status success.",
