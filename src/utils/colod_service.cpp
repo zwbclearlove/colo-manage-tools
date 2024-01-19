@@ -93,11 +93,11 @@ colod_ret_val colod_connect_status() {
     auto ret = remote_client.call<colod_ret_val>("connect-reply");
 
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
-        ret_val += " peer status : inactive\n";
+        ret_val += "   peer status : inactive\n";
         peer_init = false;
     } else {
         colod_ret_val crv = ret.val();
-        ret_val += " peer status : " + crv.msg + "\n";
+        ret_val += "   peer status : " + crv.msg + "\n";
     }
     
     ret_val += "-------------------------------------------\n";
@@ -421,9 +421,11 @@ colod_ret_val colod_domain_test(std::string domain_name) {
 }
 
 colod_ret_val peer_colod_save_status(colo_status cs) {
-    if (rs.current_status.local_status == COLO_NODE_PRIMARY) {
+    LOG("peer_colod_save_status");
+    
+    if (cs.local_status == COLO_NODE_PRIMARY) {
         rs.current_status.local_status = COLO_NODE_SECONDARY;
-    } else if (rs.current_status.local_status == COLO_NODE_SECONDARY) {
+    } else if (cs.local_status == COLO_NODE_SECONDARY) {
         rs.current_status.local_status = COLO_NODE_PRIMARY;
     } else {
         rs.current_status.local_status = COLO_NODE_NONE;
