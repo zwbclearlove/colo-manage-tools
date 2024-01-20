@@ -252,37 +252,8 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
 }
 
 int save_new_vm_file(const YAML::Node& vmdef, domain& d, std::string& err) {
-    
-    YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     YAML::Node dom;
     std::string save_path = DEFAULT_SAVE_PATH + vmdef["name"].as<std::string>() + ".yaml";
-    dom["name"] = d.name;
-    dom["path"] = save_path;
-    dom["pid"] = -1;
-    dom["status"] = "shutoff";
-    dom["colo_enable"] = false;
-    dom["colo_status"] = "none";
-    if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
-        sf["domains"].push_back(dom);
-    } else if (!sf["domains"].IsSequence()) {
-        err = "wrong format in save file.";
-        return -1;
-    } else {
-        bool redefined = false;
-        for (int i = 0; i < sf["domains"].size(); i++) {
-            if (d.name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
-                err = "domain " + d.name + " redefined"; 
-                sf["domains"][i] = dom;
-                redefined = true;
-            }
-        }
-        if (!redefined) {
-            sf["domains"].push_back(dom);
-        }
-    }
-    std::ofstream fout1(DEFAULT_SAVE_FILE);
-    fout1 << sf;
-    fout1.close();
     std::ofstream fout2(save_path);
     fout2 << vmdef;
     fout2.close();

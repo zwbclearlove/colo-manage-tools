@@ -1,5 +1,6 @@
 #include "colod_service.h"
 #include <iostream>
+#include <fstream>
 #include <csignal>
 
 #include <domain.h>
@@ -107,6 +108,38 @@ colod_ret_val colod_connect_status() {
     };
 }
 
+int save_domain_info(colod_domain_status& ds, std::string& err) {
+    YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
+    YAML::Node dom;
+    dom["name"] = ds.name;
+    dom["path"] = DEFAULT_SAVE_PATH + ds.name + ".yaml";;
+    dom["pid"] = -1;
+    dom["status"] = "shutoff";
+    dom["colo_enable"] = false;
+    dom["colo_status"] = "none";
+    if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
+        sf["domains"].push_back(dom);
+    } else if (!sf["domains"].IsSequence()) {
+        err = "wrong format in save file.";
+        return -1;
+    } else {
+        bool redefined = false;
+        for (int i = 0; i < sf["domains"].size(); i++) {
+            if (ds.name.compare(sf["domains"][i]["name"].as<std::string>()) == 0) {
+                err = "domain " + ds.name + " redefined"; 
+                sf["domains"][i] = dom;
+                redefined = true;
+            }
+        }
+        if (!redefined) {
+            sf["domains"].push_back(dom);
+        }
+    }
+    std::ofstream fout1(DEFAULT_SAVE_FILE);
+    fout1 << sf;
+    fout1.close();
+    return 0;
+}
 
 colod_ret_val colod_define(std::string vm_file_path) {
     domain d;
@@ -117,6 +150,7 @@ colod_ret_val colod_define(std::string vm_file_path) {
             err,
         };
     }
+    
     colod_domain_status ds;
     ds.name = d.name;
     ds.pid = -1;
@@ -124,6 +158,12 @@ colod_ret_val colod_define(std::string vm_file_path) {
     ds.colo_enable = false;
     ds.colo_status = COLO_DOMAIN_NONE;
     ds.config_file_path = DEFAULT_SAVE_PATH + ds.name + ".yaml";
+    if (save_domain_info(ds, err) < 0) {
+        return {
+            -1,
+            err,
+        };
+    }
     rs.domains[d.name] = ds;
     return {
         0,
@@ -452,12 +492,19 @@ colod_ret_val peer_colod_save_status(colo_status cs) {
 }
 
 colod_ret_val peer_colod_save_domain(colod_domain_status ds) {
+    
     colod_domain_status nds = ds;
     if (ds.colo_enable) {
         nds.colo_status = (ds.colo_status == COLO_DOMAIN_PRIMARY)
          ? COLO_DOMAIN_SECONDARY : COLO_DOMAIN_PRIMARY;
     }
-
+    std::string err;
+    if (save_domain_info(nds, err) < 0) {
+        return {
+            -1,
+            err,
+        };
+    }
     rs.domains[ds.name] = nds;  
     
     return {
