@@ -179,7 +179,7 @@ int remove_domain_pid(const std::string& domain_name) {
     return 0;
 }
 
-int set_domain_colo_enable(const std::string& domain_name) {
+int set_domain_colo_enable(const std::string& domain_name, COLO_DOMAIN_STATUS cds) {
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     if (!sf["domains"].IsDefined() || sf["domains"].IsNull()) {
         std::cout << "no defined domain.\n";    
@@ -188,6 +188,7 @@ int set_domain_colo_enable(const std::string& domain_name) {
         if(sf["domains"][i]["name"].as<std::string>().compare(domain_name) == 0) {
             if (sf["domains"][i]["status"].as<std::string>().compare("shutoff") == 0) {
                 sf["domains"][i]["colo_enable"] = true;
+                sf["domains"][i]["colo_status"] = colo_domain_status_to_str_map[cds];
                 break;
             } else {
                 std::cout << "shutoff domain first.\n"; 

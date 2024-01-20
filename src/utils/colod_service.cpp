@@ -336,7 +336,7 @@ colod_ret_val colod_colo_enable(std::string domain_name) {
 
     
      
-    if (set_domain_colo_enable(domain_name) < 0) {
+    if (set_domain_colo_enable(domain_name, rs.domains[domain_name].colo_status) < 0) {
         err = "can not set config file.";
         rs.domains[domain_name].colo_enable = false;
         rs.current_status.local_status == COLO_NODE_NONE;
@@ -345,6 +345,7 @@ colod_ret_val colod_colo_enable(std::string domain_name) {
             err,
         };
     }
+    
     return {
         0,
         "build colo domain " + domain_name + " success.",
@@ -503,6 +504,12 @@ colod_ret_val peer_colod_save_domain(colod_domain_status ds) {
         return {
             -1,
             err,
+        };
+    }
+    if (set_domain_colo_enable(nds.name, nds.colo_status) < 0) {
+        return {
+            -1,
+            "can not set colo peer enable",
         };
     }
     rs.domains[ds.name] = nds;  

@@ -14,5 +14,5 @@ int get_domain_list(bool show_all);
 int domains_init(std::unordered_map<std::string, colod_domain_status>& ds_map);
 int save_domain_pid(const std::string& domain_name, int pid);
 int remove_domain_pid(const std::string& domain_name);
-int set_domain_colo_enable(const std::string& domain_name);
+int set_domain_colo_enable(const std::string& domain_name, COLO_DOMAIN_STATUS cds);
 int set_domain_colo_disable(const std::string& domain_name);
