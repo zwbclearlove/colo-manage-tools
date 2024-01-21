@@ -21,6 +21,8 @@ void rs_init() {
     
 }
 
+DOMAIN_STATUS test_domain_status(const std::string& domain_name);
+
 void set_remote_client(std::string ip, int port) {
     remote_client.as_client(ip, port);
     remote_client.set_timeout(2000);
@@ -173,6 +175,13 @@ colod_ret_val colod_define(std::string vm_file_path) {
 
 
 colod_ret_val colod_undefine(std::string domain_name) {
+    if (test_domain_status(domain_name) != DOMAIN_SHUT_OFF) {
+        return {
+            -1,
+            "domain is already running.",
+        };
+    }
+
     string err;
     if (vm_undefine(domain_name, err) < 0) {
         return {
@@ -235,8 +244,7 @@ colod_ret_val colod_list(bool show_all) {
 
 colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     domain d;
-    shell_command cmd;
-    std::cout << "colo_start" << std::endl; 
+    
     if (test_domain_status(domain_name) != DOMAIN_SHUT_OFF) {
         return {
             -1,
@@ -251,21 +259,73 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
         };
     }
     // todo: get colo status from colod 
-    if (colo_enable) {
-        return {
-            0,
-            "colo domain " + domain_name + " start.",
-        };
-
-    } else {
+    if (!colo_enable) {
+        shell_command cmd;
         generate_vm_cmd(d, cmd);
         int pid = run_new_vm(d.name, cmd);
         rs.domains[domain_name].pid = pid;
         rs.domains[domain_name].status = DOMAIN_RUNNING;    
+        return {
+            0,
+            "domain " + domain_name + " start.",
+        };
+    } 
+    //start colo domain
+    if (!rs.domains[domain_name].colo_enable) {
+        return {
+            0,
+            "domain " + domain_name + " is not colo enable.",
+        };
     }
+    
+    // start peer vm
+    
+    if (!remote_client_init) {
+        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+    }
+    auto ret = remote_client.call<colod_ret_val>("peer-start-domain", domain_name, colo_enable);
+
+    if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {  
+        peer_init = false;
+        return {
+            -1,
+            "colo domain " + domain_name + " secondary start failed.",
+        };
+    } else {
+        colod_ret_val crv = ret.val();
+        if (crv.code < 0) {
+            return {
+                -1,
+                crv.msg,
+            };  
+        }
+    }
+
+    // start host vm
+
+    shell_command cmd;
+    if (rs.domains[domain_name].colo_status == COLO_DOMAIN_PRIMARY) {
+        generate_pvm_cmd(d, rs.current_status, cmd);
+    } else if (rs.domains[domain_name].colo_status == COLO_DOMAIN_SECONDARY) {
+        generate_svm_cmd(d, rs.current_status, cmd);
+    }
+    
+    int pid = run_new_vm(d.name, cmd);
+    if (pid < 0) {
+        return {
+            -1,
+            "colo domain " + domain_name + " start failed.",
+        };
+    }
+    rs.domains[domain_name].pid = pid;
+    rs.domains[domain_name].status = DOMAIN_COLO_ENABLED;
+
+    // send qmp command
+
+
     return {
         0,
-        "domain " + domain_name + " start.",
+        "colo domain " + domain_name + " start.",
     };
 }
 
@@ -517,5 +577,49 @@ colod_ret_val peer_colod_save_domain(colod_domain_status ds) {
     return {
         0,
         "peer colod save domain success.",
+    };
+}
+
+colod_ret_val peer_colod_start_domain(std::string domain_name, bool colo_enable) {
+    if (!colo_enable) {
+        return {
+            -1,
+            "peer colod can only start colo vm.",
+        };    
+    }
+    if (!rs.domains[domain_name].colo_enable) {
+        return {
+            -1,
+            "please run colo enable first.",
+        };
+    }
+    domain d;
+    if (get_domain(domain_name, d) < 0) {
+        return {
+            -1,
+            "can not get domain data.",
+        };
+    }
+    shell_command cmd;
+    if (rs.domains[domain_name].colo_status == COLO_DOMAIN_PRIMARY) {
+        generate_pvm_cmd(d, rs.current_status, cmd);
+    } else if (rs.domains[domain_name].colo_status == COLO_DOMAIN_SECONDARY) {
+        generate_svm_cmd(d, rs.current_status, cmd);
+    }
+    
+    int pid = run_new_vm(d.name, cmd);
+    if (pid < 0) {
+        return {
+            -1,
+            "colo domain " + domain_name + " start failed.",
+        };
+    }
+    rs.domains[domain_name].pid = pid;
+    rs.domains[domain_name].status = DOMAIN_COLO_ENABLED;
+
+
+    return {
+        0,
+        "peer colod start domain success.",
     };
 }
