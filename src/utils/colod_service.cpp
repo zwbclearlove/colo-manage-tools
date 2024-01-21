@@ -337,18 +337,62 @@ colod_ret_val colod_destroy(std::string domain_name) {
             "domain is shutoff.",
         };
     }
-    if (destroy_domain(domain_name) < 0) {
+    if (rs.domains[domain_name].status == DOMAIN_RUNNING) {
+        if (destroy_domain(domain_name) < 0) {
+            return {
+                -1,
+                "can not destroy domain.",
+            };
+        }
+        rs.domains[domain_name].pid = -1;
+        rs.domains[domain_name].status = DOMAIN_SHUT_OFF;
         return {
-            -1,
-            "can not destroy domain.",
+            0,
+            "domain " + domain_name + " destroy.",
         };
+    } else if (rs.domains[domain_name].status == DOMAIN_COLO_ENABLED) {
+        //destroy peer domain
+        if (!remote_client_init) {
+            set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+        }
+        auto ret = remote_client.call<colod_ret_val>("peer-destroy-domain", domain_name);
+
+        if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {  
+            peer_init = false;
+            return {
+                -1,
+                "colo domain " + domain_name + " peer destroy failed.",
+            };
+        } else {
+            colod_ret_val crv = ret.val();
+            if (crv.code < 0) {
+                return {
+                    -1,
+                    crv.msg,
+                };  
+            }
+        }
+
+        //destroy host domain
+        if (destroy_domain(domain_name) < 0) {
+            return {
+                -1,
+                "can not destroy domain.",
+            };
+        }
+        rs.domains[domain_name].pid = -1;
+        rs.domains[domain_name].status = DOMAIN_SHUT_OFF;
+        return {
+            0,
+            "colo domain " + domain_name + " destroy.",
+        };
+
     }
-    rs.domains[domain_name].pid = -1;
-    rs.domains[domain_name].status = DOMAIN_SHUT_OFF;
     return {
-        0,
-        "domain " + domain_name + " destroy.",
+        -1,
+        "can not destroy domain " + domain_name + " : wrong status.",
     };
+    
 }
 
 
@@ -621,5 +665,33 @@ colod_ret_val peer_colod_start_domain(std::string domain_name, bool colo_enable)
     return {
         0,
         "peer colod start domain success.",
+    };
+}
+
+
+colod_ret_val peer_colod_destroy_domain(std::string domain_name) {
+    if (!rs.domains[domain_name].colo_enable) {
+        return {
+            -1,
+            "can not destroy non-colo domain.",
+        };
+    }
+    if (test_domain_status(domain_name) == DOMAIN_SHUT_OFF) {
+        return {
+            -1,
+            "remote domain is shutoff.",
+        };
+    }
+    if (destroy_domain(domain_name) < 0) {
+        return {
+            -1,
+            "can not destroy domain.",
+        };
+    }
+    rs.domains[domain_name].pid = -1;
+    rs.domains[domain_name].status = DOMAIN_SHUT_OFF;
+    return {
+        0,
+        "colo domain " + domain_name + " destroy.",
     };
 }

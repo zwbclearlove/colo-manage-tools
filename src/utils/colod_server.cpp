@@ -34,6 +34,7 @@ void ColodServer::server_init() {
     this->brpc.bind("peer-save-status", peer_colod_save_status);
     this->brpc.bind("peer-save-domain", peer_colod_save_domain);
     this->brpc.bind("peer-start-domain", peer_colod_start_domain);
+    this->brpc.bind("peer-destroy-domain", peer_colod_destroy_domain);
 }
 
 void ColodServer::run() {

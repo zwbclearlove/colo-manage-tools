@@ -43,3 +43,4 @@ colod_ret_val colod_domain_test(std::string domain_name);
 colod_ret_val peer_colod_save_status(colo_status cs);
 colod_ret_val peer_colod_save_domain(colod_domain_status ds);
 colod_ret_val peer_colod_start_domain(std::string domain_name, bool colo_enable);
+colod_ret_val peer_colod_destroy_domain(std::string domain_name);
