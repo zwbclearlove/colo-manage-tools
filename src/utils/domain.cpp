@@ -145,7 +145,7 @@ int generate_vm_cmd(const domain& d, shell_command& cmd) {
     ADD_ARGS("-smp", std::to_string(d.vcpu));
     ADD_ARGS("-overcommit", "mem-lock=off");
     ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server=on,wait=off");   
-    ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=on");
+    ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=off");
     ADD_ARGS("-vnc", ":7");
     ADD_ARGS("-rtc", "base=utc");
     ADD_ARGS("-smbios", "type=1");
@@ -177,7 +177,7 @@ int generate_pvm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     ADD_ARGS("-smp", std::to_string(d.vcpu));
     ADD_ARGS("-overcommit", "mem-lock=off");
     ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server");   
-    ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=on");
+    ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=off");
     ADD_ARGS("-vnc", ":7");
     ADD_ARGS("-rtc", "base=utc");
     ADD_ARGS("-smbios", "type=1");
@@ -221,7 +221,7 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     ADD_ARGS("-smp", std::to_string(d.vcpu));
     ADD_ARGS("-overcommit", "mem-lock=off");
     ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server");   
-    ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=on");
+    ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=off");
     ADD_ARGS("-vnc", ":7");
     ADD_ARGS("-rtc", "base=utc");
     ADD_ARGS("-smbios", "type=1");
