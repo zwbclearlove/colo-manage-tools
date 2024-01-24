@@ -26,13 +26,26 @@ struct colod_domain_status {
 	} 
 };
 
-struct run_status
-{
+struct run_status {
 	colo_status current_status;
     std::unordered_map<std::string, colod_domain_status> domains;
 };
 
+class qmp_socket {
+public:
+    int sockfd;
+    std::string sockaddr;
+    int port;
 
+    qmp_socket();
+    qmp_socket(std::string sockaddr, int port);
+    ~qmp_socket();
+
+    int qmp_connect();
+    int qmp_send(const std::string& msg);
+    int qmp_recv(std::string& msg);
+    void qmp_close();
+};
 
 
 int colod_pretest();

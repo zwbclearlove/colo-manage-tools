@@ -251,6 +251,30 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     return 0;
 }
 
+int generate_pvm_qmpcmd(const domain& d, const colo_status& cs, const colod_domain_status& cds, std::vector<std::string>& qmp_cmds) {
+    std::string snd_ip = cds.colo_status == COLO_DOMAIN_PRIMARY ? cs.peer_ip : cs.host_ip;
+    qmp_cmds.clear();
+    qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
+    qmp_cmds.push_back("{'execute': 'human-monitor-command', 'arguments': {'command-line': 'drive_add -n buddy driver=replication,mode=primary,file.driver=nbd,file.host=192.168.10.3,file.port=9999,file.export=parent0,node-name=replication0'}}");
+    qmp_cmds.push_back("{'execute': 'x-blockdev-change', 'arguments':{'parent': 'colo-disk0', 'node': 'replication0' } }");
+    qmp_cmds.push_back("{'execute': 'migrate-set-capabilities', 'arguments': {'capabilities': [ {'capability': 'x-colo', 'state': true }");
+    qmp_cmds.push_back("{'execute': 'migrate-set-parameters', 'arguments': {'max-bandwidth': 40000000000 } }");
+    qmp_cmds.push_back("{'execute': 'migrate', 'arguments': {'uri': 'tcp:" + snd_ip + ":8888', 'colo':true } }");
+    //qmp_cmds.push_back("{'execute': 'trace-event-set-state', 'arguments': {'name': 'colo*', 'enable': true } }");
+    return 0;
+}
+
+int generate_svm_qmpcmd(const domain& d, const colo_status& cs, const colod_domain_status& cds, std::vector<std::string>& qmp_cmds) {
+    std::string snd_ip = cds.colo_status == COLO_DOMAIN_PRIMARY ? cs.peer_ip : cs.host_ip;
+    qmp_cmds.clear();
+    qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
+    qmp_cmds.push_back("{'execute': 'nbd-server-start', 'arguments': {'addr': {'type': 'inet', 'data': {'host': '" + snd_ip + "', 'port':'9999' } } } }");
+    qmp_cmds.push_back("{'execute': 'nbd-server-add', 'arguments': {'device': 'parent0', 'writable': true } }");
+    qmp_cmds.push_back("{'execute': 'migrate-set-parameters', 'arguments': {'max-bandwidth': 40000000000 } }");
+    //qmp_cmds.push_back("{'execute': 'trace-event-set-state', 'arguments': {'name': 'colo*', 'enable': true } }");
+    return 0;
+}
+
 int save_new_vm_file(const YAML::Node& vmdef, domain& d, std::string& err) {
     YAML::Node dom;
     std::string save_path = DEFAULT_SAVE_PATH + vmdef["name"].as<std::string>() + ".yaml";

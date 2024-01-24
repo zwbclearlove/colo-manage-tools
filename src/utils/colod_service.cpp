@@ -3,8 +3,10 @@
 #include <fstream>
 #include <csignal>
 
+
 #include <domain.h>
 #include <runvm.h>
+#include "colod.h"
 #include "config_parser.h"
 #include "buttonrpc.hpp"
 
@@ -241,10 +243,40 @@ colod_ret_val colod_list(bool show_all) {
     };
 }
 
+int send_qmp_cmds(std::vector<std::string> qmp_cmds) {
+    qmp_socket qs("127.0.0.1", 4444);
+    int ret = qs.qmp_connect();
+    if (ret < 0) {
+        LOG("qmp socket connect failed.");
+        return ret;
+    }
+    std::string msg;
+    ret = qs.qmp_recv(msg);
+    if (ret < 0) {
+        LOG("qmp socket recv failed.");
+        return ret;
+    }
+    LOG(msg);
+    for (auto& cmd : qmp_cmds) {
+        ret = qs.qmp_send(cmd);
+        if (ret < 0) {
+            LOG("qmp socket send failed.");
+            return ret;
+        }
+        ret = qs.qmp_recv(msg);
+        if (ret < 0) {
+            LOG("qmp socket recv failed.");
+            return ret;
+        }
+        LOG(msg);
+    }
+    return 0;
+}
+
 
 colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     domain d;
-    
+    COLO_DOMAIN_STATUS cur_status = rs.domains[domain_name].colo_status;
     if (test_domain_status(domain_name) != DOMAIN_SHUT_OFF) {
         return {
             -1,
@@ -304,9 +336,9 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     // start host vm
 
     shell_command cmd;
-    if (rs.domains[domain_name].colo_status == COLO_DOMAIN_PRIMARY) {
+    if (cur_status == COLO_DOMAIN_PRIMARY) {
         generate_pvm_cmd(d, rs.current_status, cmd);
-    } else if (rs.domains[domain_name].colo_status == COLO_DOMAIN_SECONDARY) {
+    } else if (cur_status == COLO_DOMAIN_SECONDARY) {
         generate_svm_cmd(d, rs.current_status, cmd);
     }
     
@@ -321,6 +353,64 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     rs.domains[domain_name].status = DOMAIN_COLO_ENABLED;
 
     // send qmp command
+    
+    if (cur_status == COLO_DOMAIN_PRIMARY) {
+        // send peer snd qmp
+        ret = remote_client.call<colod_ret_val>("peer-send-qmpcmds", domain_name, COLO_DOMAIN_SECONDARY);
+        if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {  
+            peer_init = false;
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed :  secondary send qmpcmd failed.",
+            };
+        } else {
+            colod_ret_val crv = ret.val();
+            if (crv.code < 0) {
+                return {
+                    -1,
+                    crv.msg,
+                };  
+            }
+        }
+
+
+        std::vector<std::string> qmp_cmds;
+        generate_pvm_qmpcmd(d, rs.current_status, rs.domains[domain_name], qmp_cmds);
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed : primary send qmp cmds failed.",
+            };
+        }
+
+    } else if (cur_status == COLO_DOMAIN_SECONDARY) {
+        std::vector<std::string> qmp_cmds;
+        generate_svm_qmpcmd(d, rs.current_status, rs.domains[domain_name], qmp_cmds);
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed : secondary send snd qmp cmds failed.",
+            };
+        }
+
+        // send peer pri qmp
+        ret = remote_client.call<colod_ret_val>("peer-send-qmpcmds", domain_name, COLO_DOMAIN_PRIMARY);
+        if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {  
+            peer_init = false;
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed :  primary send qmpcmd failed.",
+            };
+        } else {
+            colod_ret_val crv = ret.val();
+            if (crv.code < 0) {
+                return {
+                    -1,
+                    crv.msg,
+                };  
+            }
+        }
+    }
 
 
     return {
@@ -693,5 +783,46 @@ colod_ret_val peer_colod_destroy_domain(std::string domain_name) {
     return {
         0,
         "colo domain " + domain_name + " destroy.",
+    };
+}
+
+colod_ret_val peer_colod_send_qmpcmds(std::string domain_name, COLO_DOMAIN_STATUS cds) {
+    if (test_domain_status(domain_name) == DOMAIN_SHUT_OFF) {
+        return {
+            -1,
+            "remote domain is shutoff.",
+        };
+    }
+    domain d;
+    if (get_domain(domain_name, d) < 0) {
+        return {
+            -1,
+            "can not get domain data.",
+        };
+    }
+    
+    std::vector<std::string> qmp_cmds;
+    if (cds == COLO_DOMAIN_PRIMARY) {
+        generate_pvm_qmpcmd(d, rs.current_status, rs.domains[domain_name], qmp_cmds);
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed : primary send qmp cmds failed.",
+            };
+        }
+    } else if (cds == COLO_DOMAIN_SECONDARY) {
+        generate_svm_qmpcmd(d, rs.current_status, rs.domains[domain_name], qmp_cmds);
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed : sencondary send qmp cmds failed.",
+            };
+        }
+    }
+
+    
+    return {
+        -1,
+        "colo domain " + domain_name + " peer send qmp failed.",
     };
 }
