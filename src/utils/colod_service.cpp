@@ -810,6 +810,10 @@ colod_ret_val peer_colod_send_qmpcmds(std::string domain_name, COLO_DOMAIN_STATU
                 "colo domain " + domain_name + " start failed : primary send qmp cmds failed.",
             };
         }
+        return {
+            0,
+            "send colo qmp success.",
+        };
     } else if (cds == COLO_DOMAIN_SECONDARY) {
         generate_svm_qmpcmd(d, rs.current_status, rs.domains[domain_name], qmp_cmds);
         if (send_qmp_cmds(qmp_cmds) < 0) {
@@ -818,6 +822,10 @@ colod_ret_val peer_colod_send_qmpcmds(std::string domain_name, COLO_DOMAIN_STATU
                 "colo domain " + domain_name + " start failed : sencondary send qmp cmds failed.",
             };
         }
+        return {
+            0,
+            "send colo qmp success.",
+        };
     }
 
     
