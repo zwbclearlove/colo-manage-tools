@@ -27,7 +27,7 @@ DOMAIN_STATUS test_domain_status(const std::string& domain_name);
 
 void set_remote_client(std::string ip, int port) {
     remote_client.as_client(ip, port);
-    remote_client.set_timeout(2000);
+    remote_client.set_timeout(20000);
 }
 
 // colo_manage_tools interface
