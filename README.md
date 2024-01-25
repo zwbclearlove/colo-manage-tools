@@ -5,7 +5,7 @@ Manage tool for COLO-based fault-tolerant VM.
 base on : QEMU-COLO
 requirements: libzmq-4.3.5
 
-```
+``` shell
 cd $PROJECT_DIR
 mkdir build
 cd build
@@ -17,7 +17,7 @@ cd ../bin
 # how to use
 
 ## run colod
-```
+``` shell
 cd $PROJECT_DIR
 cd bin
 sudo ./colod
@@ -88,7 +88,7 @@ colo:
 
 ## start a colo vm
 
-```
+``` shell
 cd $PROJECT_DIR
 cd bin
 # connect to peer node
@@ -132,160 +132,205 @@ options:
 ## all management commands
 
 ### connect-peer
-NAME
+**NAME**
+    
     connect-peer - connect peer colod
 
-SYNOPSIS
-    colo_manage_tools -t connect-peer [(-c|--config-file) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t connect-peer [(-c|--config-file) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
     connect peer colod and record it
 
-OPTIONS
+**OPTIONS**
+    
     --config-file <string>   colo config file
 
 ### connect-status
-NAME
+**NAME**
+    
     connect-status - show connect status
 
-SYNOPSIS
-    colo_manage_tools -t connect-status
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t connect-status```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     show current connect-status
 
 ### define
-NAME
+**NAME**
+    
     define - define a domain
 
-SYNOPSIS
-    colo_manage_tools -t define [(-v|--vm-file) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t define [(-v|--vm-file) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     define a COLO-VM with given vm-file
 
-OPTIONS
+**OPTIONS**
+    
     --vm-file <string>   colo domain config file
 
 ### undefine
-NAME
+**NAME**
+    
     undefine - undefine a domain
 
-SYNOPSIS
-    colo_manage_tools -t undefine [(-d|--domain) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t undefine [(-d|--domain) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     define a COLO-VM
 
-OPTIONS
+**OPTIONS**
+    
     --domain <string>   colo domain name
 
 ### list
-NAME
+**NAME**
+    
     list - list all the domains
 
-SYNOPSIS
-    colo_manage_tools -t list [--all]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t list [--all]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     list all the domains
 
-OPTIONS
+**OPTIONS**
+    
     --all   show all the domains(include the shutoff domain)
 
 ### start
-NAME
+**NAME**
+    
     start - start a domain
 
-SYNOPSIS
-    colo_manage_tools -t start [(-d|--domain) <string>] [--colo]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t start [(-d|--domain) <string>] [--colo]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     start a domain, in native mode or colo-mode
 
-OPTIONS
+**OPTIONS**
+    
     --domain <string>   colo domain name
     --colo              start domain with colo-enabled
 
 ### destroy
-NAME
+**NAME**
+    
     destroy - destroy a domain
 
-SYNOPSIS
-    colo_manage_tools -t destroy [(-d|--domain) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t destroy [(-d|--domain) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     destroy a running domain
 
-OPTIONS
+**OPTIONS**
+    
     --domain <string>   colo domain name
 
 ### colo-enable
-NAME
+**NAME**
+    
     colo-enable - make a domain colo-enabled
 
-SYNOPSIS
-    colo_manage_tools -t colo-enable [(-d|--domain) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t colo-enable [(-d|--domain) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     colo-enable a shutoff domain, transfer its config-file and disk-file to peer node
 
-OPTIONS
+**OPTIONS**
+    
     --domain <string>   colo domain name
 
 ### colo-disable
-NAME
+**NAME**
+    
     colo-disable - make a domain colo-disabled
 
-SYNOPSIS
-    colo_manage_tools -t colo-disable [(-d|--domain) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t colo-disable [(-d|--domain) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     colo-disable a shutoff domain, and this domain can not start in colo-mode
 
-OPTIONS
+**OPTIONS**
     --domain <string>   colo domain name
 
 ### vm-status
-NAME
+**NAME**
+    
     vm-status - show a domain detailed status
 
-SYNOPSIS
-    colo_manage_tools -t vm-status [(-d|--domain) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t vm-status [(-d|--domain) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     show a domain detailed status
 
-OPTIONS
+**OPTIONS**
+    
     --domain <string>   colo domain name
 
 ### set-params
-NAME
+**NAME**
+    
     set-params - set colo-enabled domains running params
 
-SYNOPSIS
-    colo_manage_tools -t set-params [(-d|--domain) <string>] [--$PROPERTY <int>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t set-params [(-d|--domain) <string>] [--$PROPERTY <int>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     show a domain detailed status
 
-OPTIONS
+**OPTIONS**
+    
     --domain <string>    colo domain name
     --checkpoint-time    checkpoint time (int [=1000])
     --compare-timeout    compare timeout (int [=1000])
     --max-queue-size     max queue size (int [=65535])
 
 ### do-failover
-NAME
+**NAME**
+    
     do-failover - do failover for a colo-enabled domain
 
-SYNOPSIS
-    colo_manage_tools -t do-failover [(-d|--domain) <string>]
+**SYNOPSIS**
+    
+    ```colo_manage_tools -t do-failover [(-d|--domain) <string>]```
 
-DESCRIPTION
+**DESCRIPTION**
+    
     do failover for a colo-enabled running domain
 
-OPTIONS
+**OPTIONS**
+    
     --domain <string>   colo domain name
 
 
