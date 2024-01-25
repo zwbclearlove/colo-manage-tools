@@ -3,7 +3,7 @@
 #include "Serializer.hpp"
 #include <unordered_map>
 #include <stdlib.h>
-#include <stdio.h>
+#include <iostream>
 
 struct colod_domain_status {
     pid_t pid;
