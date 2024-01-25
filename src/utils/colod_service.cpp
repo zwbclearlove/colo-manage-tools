@@ -829,12 +829,12 @@ colod_ret_val peer_colod_send_qmpcmds(std::string domain_name, COLO_DOMAIN_STATU
         for (auto& cmd : qmp_cmds) {
             LOG(cmd);
         }
-        // if (send_qmp_cmds(qmp_cmds) < 0) {
-        //     return {
-        //         -1,
-        //         "colo domain " + domain_name + " start failed : sencondary send qmp cmds failed.",
-        //     };
-        // }
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed : sencondary send qmp cmds failed.",
+            };
+        }
         return {
             0,
             "send colo qmp success.",

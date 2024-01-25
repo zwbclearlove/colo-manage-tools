@@ -53,6 +53,5 @@ int colod_test_exist();
 
 
 inline void LOG(const std::string& log) {
-    printf("%s %s : %s\n",
-     __DATE__, __TIME__, log.c_str());
+    std::cout << log << std::endl;
 }
