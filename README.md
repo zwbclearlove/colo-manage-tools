@@ -138,7 +138,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t connect-peer [(-c|--config-file) <string>]```
+    colo_manage_tools -t connect-peer [(-c|--config-file) <string>]
 
 **DESCRIPTION**
     connect peer colod and record it
@@ -154,7 +154,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t connect-status```
+    colo_manage_tools -t connect-status
 
 **DESCRIPTION**
     
@@ -167,7 +167,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t define [(-v|--vm-file) <string>]```
+    colo_manage_tools -t define [(-v|--vm-file) <string>]
 
 **DESCRIPTION**
     
@@ -184,7 +184,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t undefine [(-d|--domain) <string>]```
+    colo_manage_tools -t undefine [(-d|--domain) <string>]
 
 **DESCRIPTION**
     
@@ -201,7 +201,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t list [--all]```
+    colo_manage_tools -t list [--all]
 
 **DESCRIPTION**
     
@@ -218,7 +218,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t start [(-d|--domain) <string>] [--colo]```
+    colo_manage_tools -t start [(-d|--domain) <string>] [--colo]
 
 **DESCRIPTION**
     
@@ -236,7 +236,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t destroy [(-d|--domain) <string>]```
+    colo_manage_tools -t destroy [(-d|--domain) <string>]
 
 **DESCRIPTION**
     
@@ -253,7 +253,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t colo-enable [(-d|--domain) <string>]```
+    colo_manage_tools -t colo-enable [(-d|--domain) <string>]
 
 **DESCRIPTION**
     
@@ -270,7 +270,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t colo-disable [(-d|--domain) <string>]```
+    colo_manage_tools -t colo-disable [(-d|--domain) <string>]
 
 **DESCRIPTION**
     
@@ -286,7 +286,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t vm-status [(-d|--domain) <string>]```
+    colo_manage_tools -t vm-status [(-d|--domain) <string>]
 
 **DESCRIPTION**
     
@@ -303,7 +303,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t set-params [(-d|--domain) <string>] [--$PROPERTY <int>]```
+    colo_manage_tools -t set-params [(-d|--domain) <string>] [--$PROPERTY <int>]
 
 **DESCRIPTION**
     
@@ -323,7 +323,7 @@ options:
 
 **SYNOPSIS**
     
-    ```colo_manage_tools -t do-failover [(-d|--domain) <string>]```
+    colo_manage_tools -t do-failover [(-d|--domain) <string>]
 
 **DESCRIPTION**
     
