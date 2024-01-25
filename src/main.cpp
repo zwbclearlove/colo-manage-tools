@@ -19,19 +19,14 @@ int main(int argc, char *argv[]) {
     cmd_parser.add<std::string>("vm-file", 'v', "vm definition file", false, "");
     cmd_parser.add<std::string>("config-file", 'c', "configuration file", false, "");
     cmd_parser.add<std::string>("domain", 'd', "domain name", false, "");
+    cmd_parser.add<std::string>("qmp-command", 'q', "qmp-command", false, "");
     cmd_parser.add("all", '\0', "show all the vms");
     cmd_parser.add("colo", '\0', "start vm in colo mode");
     cmd_parser.add<int>("checkpoint-time", '\0', "checkpoint time", false, 1000);
     cmd_parser.add<int>("compare-timeout", '\0', "compare timeout", false, 1000);
-    cmd_parser.add<int>("max_queue_size", '\0', "max_queue_size", false, 65535);
+    cmd_parser.add<int>("max-queue-size", '\0', "max queue size", false, 65535);
     cmd_parser.add("restart-colod", 'r', "restart colod");
     
-    
-
-    // YAML::Node config = YAML::LoadFile("/home/ubuntu/config/config.yaml");
-    // const std::string username = config["username"].as<std::string>();
-    // const std::string password = config["password"].as<std::string>();
-    // std::cout << username << "---" << password << std::endl;
     cmd_parser.parse_check(argc, argv);
     if (cmd_parser.exist("restart-colod")) {
         //restart colod
@@ -307,6 +302,53 @@ int main(int argc, char *argv[]) {
         break;
     case COMMAND_SET_PARAMS:
         {
+            if (!cmd_parser.exist("domain")) {
+                std::cout << "no domain name." << std::endl;
+                return 0;
+            }
+            std::string name = cmd_parser.get<std::string>("domain");
+            int param_count = 0, param_value;
+            std::string property;
+            
+            if (cmd_parser.exist("checkpoint-time")) {
+                param_count += 1;
+                
+                property = "checkpoint-time";
+                param_value = cmd_parser.get<int>("checkpoint-time");
+            }
+            if (cmd_parser.exist("compare-timeout")) {
+                param_count += 1;
+                
+                property = "compare-timeout";
+                param_value = cmd_parser.get<int>("compare-timeout");
+            }
+            if (cmd_parser.exist("max-queue-size")) {
+                param_count += 1;    
+                
+                property = "max-queue-size";
+                param_value = cmd_parser.get<int>("max-queue-size");
+            }
+            if (param_count == 0) {
+                std::cout << "no params to set." << std::endl;    
+                goto cleanup;
+            } else if (param_count > 1) {
+                std::cout << "can only set one param." << std::endl;    
+                goto cleanup;
+            }
+            auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_SET_PARAMS], name, property, param_value);
+
+            if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+                std::cout << "connect to colod timeout." << std::endl;
+                goto cleanup;
+            }
+
+            colod_ret_val crv = ret.val();
+            if (crv.code < 0) {
+                std::cout << crv.msg << std::endl;
+                goto cleanup;
+            }
+
+            std::cout << crv.msg << std::endl; 
 
         }
         break;

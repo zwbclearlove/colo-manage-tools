@@ -1,0 +1,41 @@
+name: test
+memory: 2048
+qemu: /usr/local/bin/qemu-system-x86_64
+vcpu: 4
+os:
+  arch: x86_64
+  machine: pc-i440fx-4.2
+  type: hvm
+cpu: host
+
+disk:
+  driver: qcow2
+  size: 307200 
+  path: /home/ubuntu/vmtest/ubuntu18.qcow2
+  hidden_path: /home/ubuntu/vmtest/secondary-hidden.qcow2
+  active_path: /home/ubuntu/vmtest/secondary-active.qcow2
+
+net:
+  id: hn0
+  br: virbr0
+  helper: /usr/local/libexec/qemu-bridge-helper
+  mac: 00:0c:29:5e:72:33
+ 
+colo:
+  ports: [9003,9004,9005,9006,9007]
+  pri:
+    telnet_port: 4444
+    mirror_port: 9003
+    cmp0_port: 9001
+    cmp1_port: 9004
+    cmp_out_port: 9005
+    
+  sec:
+    telnet_port: 4444
+    nbd_port: 9999
+    migrate_port: 8888
+    red0_port: 9003
+    red1_port: 9004
+  
+    
+  

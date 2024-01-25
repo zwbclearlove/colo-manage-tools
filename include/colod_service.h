@@ -32,8 +32,8 @@ colod_ret_val colod_destroy(std::string domain_name);
 colod_ret_val colod_colo_enable(std::string domain_name);
 colod_ret_val colod_colo_disable(std::string domain_name);
 colod_ret_val colod_vm_status(std::string domain_name);
-colod_ret_val colod_set_params();
-colod_ret_val colod_do_failover(std::string domain_name);
+colod_ret_val colod_set_params(std::string domain_name, std::string property, int value);
+colod_ret_val colod_do_failover(std::string domain_name, COLO_DOMAIN_STATUS cds);
 
 
 // peer colod insterface

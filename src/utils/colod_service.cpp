@@ -599,20 +599,65 @@ colod_ret_val colod_vm_status(std::string domain_name) {
     };
 }
 
-colod_ret_val colod_set_params() {
-    std::cout << "colod_set_params" << std::endl;
+colod_ret_val colod_set_params(std::string domain_name, std::string property, int value) {
+    if (rs.domains[domain_name].status == DOMAIN_SHUT_OFF) {
+        return {
+            -1,
+            "can not set params for a shutoff domain.",
+        }; 
+    }
+    if (!rs.domains[domain_name].colo_enable) {
+        return {
+            -1,
+            "can not set params for a colo-disabled domain.",
+        }; 
+    }
+    std::cout << "colod_set_params\n domain name : " << domain_name 
+    << " property : " << property << "=" << value <<  std::endl;
+    // send qmp command
+    std::vector<std::string> qmp_cmds;
+    qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
+    if (property.compare("checkpoint-time") == 0) {
+        qmp_cmds.push_back("{'execute': 'migrate-set-parameters' , 'arguments':{ 'x-checkpoint-delay': " 
+            + std::to_string(value) + " } }");
+    } else if (property.compare("compare-timeout") == 0) {
+        qmp_cmds.push_back("{ 'execute': 'qom-set','arguments': { 'path': '/objects/comp0','property': 'compare_timeout','value': " 
+            + std::to_string(value) + "} }");
+    } else if (property.compare("max-queue-size") == 0) {
+        qmp_cmds.push_back("{ 'execute': 'qom-set','arguments': { 'path': '/objects/comp0','property': 'max_queue_size','value': " 
+            + std::to_string(value) + "} }");
+    } else {
+        return {
+            -1,
+            "can not find property : " + property + ".",
+        };    
+    }
+    std::cout << "set params qmp cmd : " << qmp_cmds[1] << std::endl;
+    if (send_qmp_cmds(qmp_cmds) < 0) {
+        return {
+            -1,
+            "colo domain " + domain_name + " set params failed : send qmp cmds failed.",
+        };
+    }
     return {
         0,
-        "",
+        "set params success.",
     };
 }
 
 
-colod_ret_val colod_do_failover(std::string domain_name) {
+colod_ret_val colod_do_failover(std::string domain_name, COLO_DOMAIN_STATUS cds) {
     std::cout << "colod_do_failover" << std::endl;
+    if (cds == COLO_DOMAIN_PRIMARY) {
+        
+
+    } else if (cds == COLO_DOMAIN_SECONDARY) {
+
+
+    }
     return {
-        0,
-        "",
+        -1,
+        "can not do failover in wrong colo status.",
     };
 }
 

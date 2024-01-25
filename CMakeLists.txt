@@ -9,7 +9,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib/)
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(GLIB REQUIRED glib-2.0)
+# pkg_search_module(GLIB REQUIRED glib-2.0)
 pkg_search_module(ZMQ REQUIRED libzmq)
 
 link_directories(${PROJECT_SOURCE_DIR}/lib/)
@@ -25,7 +25,7 @@ set(SRC_LIST src/main.cpp src/utils/domain.cpp src/utils/config_parser.cpp
 src/utils/runvm.cpp src/utils/shell_command.cpp src/utils/colod_utils.cpp)
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
-target_link_libraries(${PROJECT_NAME} ${LIBYAML} ${LIBZMQ} ${GLIB_LDFLAGS} utils)
+target_link_libraries(${PROJECT_NAME} ${LIBYAML} ${LIBZMQ} utils)
 
 add_executable(colod src/colod.cpp src/utils/config_parser.cpp src/utils/domain.cpp 
 src/utils/colod_utils.cpp src/utils/colod_server.cpp src/utils/shell_command.cpp
