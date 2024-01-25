@@ -380,12 +380,12 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
         for (auto& cmd : qmp_cmds) {
             LOG(cmd);
         }
-        // if (send_qmp_cmds(qmp_cmds) < 0) {
-        //     return {
-        //         -1,
-        //         "colo domain " + domain_name + " start failed : primary send qmp cmds failed.",
-        //     };
-        // }
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed : primary send qmp cmds failed.",
+            };
+        }
 
     } else if (cur_status == COLO_DOMAIN_SECONDARY) {
         std::vector<std::string> qmp_cmds;
@@ -393,12 +393,12 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
         for (auto& cmd : qmp_cmds) {
             LOG(cmd);
         }
-        // if (send_qmp_cmds(qmp_cmds) < 0) {
-        //     return {
-        //         -1,
-        //         "colo domain " + domain_name + " start failed : secondary send snd qmp cmds failed.",
-        //     };
-        // }
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " start failed : secondary send snd qmp cmds failed.",
+            };
+        }
 
         // send peer pri qmp
         ret = remote_client.call<colod_ret_val>("peer-send-qmpcmds", domain_name, COLO_DOMAIN_PRIMARY);
