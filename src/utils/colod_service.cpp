@@ -679,7 +679,9 @@ colod_ret_val peer_colod_save_status(colo_status cs) {
     rs.current_status.peer_user = cs.host_user;
     rs.current_status.peer_file_path = cs.host_file_path;
     rs.current_status.colod_port = cs.colod_port;
-    
+    if (!remote_client_init) {
+        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+    }
     if (save_colo_status(rs.current_status) < 0) {
         return {
             -1,
