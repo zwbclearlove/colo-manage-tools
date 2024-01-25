@@ -269,6 +269,7 @@ int send_qmp_cmds(std::vector<std::string> qmp_cmds) {
             return ret;
         }
         LOG(msg);
+        usleep(10000);
     }
     return 0;
 }
