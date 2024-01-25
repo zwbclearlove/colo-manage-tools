@@ -92,9 +92,9 @@ colod_ret_val colod_connect_status() {
     ret_val += "     peer user : " + rs.current_status.peer_user + "\n";
     ret_val += "peer file path : " + rs.current_status.peer_file_path + "\n";
     
-    if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
-    }
+    // if (!remote_client_init) {
+    //     set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+    // }
     auto ret = remote_client.call<colod_ret_val>("connect-reply");
 
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
@@ -313,9 +313,9 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     
     // start peer vm
     
-    if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
-    }
+    // if (!remote_client_init) {
+    //     set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+    // }
     auto ret = remote_client.call<colod_ret_val>("peer-start-domain", domain_name, colo_enable);
 
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {  
@@ -443,9 +443,9 @@ colod_ret_val colod_destroy(std::string domain_name) {
         };
     } else if (rs.domains[domain_name].status == DOMAIN_COLO_ENABLED) {
         //destroy peer domain
-        if (!remote_client_init) {
-            set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
-        }
+        // if (!remote_client_init) {
+        //     set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+        // }
         auto ret = remote_client.call<colod_ret_val>("peer-destroy-domain", domain_name);
 
         if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {  
@@ -629,9 +629,9 @@ colod_ret_val peer_colod_connect_test() {
             "connect-peer first.",
         };
     }
-    if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
-    }
+    // if (!remote_client_init) {
+    //     set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+    // }
     auto ret = remote_client.call<colod_ret_val>("connect-reply");
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
         peer_init = false;
