@@ -109,6 +109,7 @@ int qmp_socket::qmp_recv(std::string& msg) {
 }
 
 void qmp_socket::qmp_close() {
-    close(this->sockfd);
+    //close(this->sockfd);
+    shutdown(this->sockfd, SHUT_RDWR);
 }
  
