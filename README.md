@@ -10,7 +10,7 @@ cd $PROJECT_DIR
 mkdir build
 cd build
 make -j8
-# sudo make install
+sudo make install
 cd ../bin
 ```
 
@@ -141,6 +141,7 @@ options:
     colo_manage_tools -t connect-peer [(-c|--config-file) <string>]
 
 **DESCRIPTION**
+
     connect peer colod and record it
 
 **OPTIONS**
