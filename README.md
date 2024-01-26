@@ -278,6 +278,7 @@ options:
     colo-disable a shutoff domain, and this domain can not start in colo-mode
 
 **OPTIONS**
+
     --domain <string>   colo domain name
 
 ### vm-status
