@@ -32,5 +32,5 @@ src/utils/colod_utils.cpp src/utils/colod_server.cpp src/utils/shell_command.cpp
 src/utils/colod_service.cpp src/utils/runvm.cpp)
 target_link_libraries(colod ${LIBYAML} ${LIBZMQ})
 
-
+install(DIRECTORY config/ DESTINATION /usr/local/etc/colod)
 

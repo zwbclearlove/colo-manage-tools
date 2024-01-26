@@ -15,6 +15,9 @@ disk:
   hidden_path: /home/ubuntu/vmtest/secondary-hidden.qcow2
   active_path: /home/ubuntu/vmtest/secondary-active.qcow2
 
+display:
+  vnc_port: 7
+
 net:
   id: hn0
   br: virbr0

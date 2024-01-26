@@ -2,10 +2,10 @@
 #include <unordered_map>
 #include "Serializer.hpp"
 
-#define DEFAULT_CONFIG_FILE_PATH "/home/ubuntu/config/config.yaml"
-#define DEFAULT_CONFIG_DOMAIN_PATH "/home/ubuntu/config/domain.yaml"
-#define DEFAULT_SAVE_PATH "/home/ubuntu/config/colo_manage_tools/"
-#define DEFAULT_SAVE_FILE "/home/ubuntu/config/colo_manage_tools/save.yaml"
+#define DEFAULT_CONFIG_FILE_PATH "/usr/local/etc/colod/default_config.yaml"
+#define DEFAULT_CONFIG_DOMAIN_PATH "/usr/local/etc/colod/default_domain.yaml"
+#define DEFAULT_SAVE_PATH "/usr/local/etc/colod/"
+#define DEFAULT_SAVE_FILE "/usr/local/etc/colod/save.yaml"
 
 enum COLO_NODE_STATUS {
     COLO_NODE_NONE,
