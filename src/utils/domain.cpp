@@ -90,6 +90,16 @@ int vm_config_parse(const YAML::Node& config, domain& new_domain, std::string& e
     }
     new_domain.disk.active_path = config["disk"]["active_path"].as<std::string>();
 
+    if (!config["display"].IsDefined()) {
+        err = "cannot find display definition.";
+        return -1;
+    }
+    if (!config["display"]["vnc_port"].IsDefined()) {
+        err = "cannot find display vnc_port.";
+        return -1;
+    }
+    new_domain.vnc_port = config["display"]["vnc_port"].as<unsigned short>();
+
     if (!config["net"].IsDefined()) {
         err = "cannot find net definition.";
         return -1;
@@ -122,13 +132,74 @@ int vm_config_parse(const YAML::Node& config, domain& new_domain, std::string& e
         err = "cannot find colo definition.";
         return -1;
     }
-    // if (!config["colo"]["ports"].IsDefined() || !config["colo"]["ports"].IsSequence()) {
-    //     err = "cannot find colo definition.";
-    //     return -1;
-    // }
-    // for (int i = 0; i < config["colo"]["ports"].size(); i++) {
-    //     new_domain.port_list.emplace_back(config["colo"]["ports"][i].as<int>());
-    // }
+    if (!config["colo"]["pri"].IsDefined()) {
+        err = "cannot find colo pri definition.";
+        return -1;
+    }
+    if (!config["colo"]["pri"]["telnet_port"].IsDefined()) {
+        err = "cannot find colo pri telnet_port.";
+        return -1;
+    }
+    new_domain.pri.telnet_port = config["colo"]["pri"]["telnet_port"].as<unsigned short>();
+
+    if (!config["colo"]["pri"]["mirror_port"].IsDefined()) {
+        err = "cannot find colo pri mirror_port.";
+        return -1;
+    }
+    new_domain.pri.mirror_port = config["colo"]["pri"]["mirror_port"].as<unsigned short>();
+
+    if (!config["colo"]["pri"]["cmp0_port"].IsDefined()) {
+        err = "cannot find colo pri cmp0_port.";
+        return -1;
+    }
+    new_domain.pri.cmp0_port = config["colo"]["pri"]["cmp0_port"].as<unsigned short>();
+
+    if (!config["colo"]["pri"]["cmp1_port"].IsDefined()) {
+        err = "cannot find colo pri cmp1_port.";
+        return -1;
+    }
+    new_domain.pri.cmp1_port = config["colo"]["pri"]["cmp1_port"].as<unsigned short>();
+
+    if (!config["colo"]["pri"]["cmp_out_port"].IsDefined()) {
+        err = "cannot find colo pri cmp_out_port.";
+        return -1;
+    }
+    new_domain.pri.cmp_out_port = config["colo"]["pri"]["cmp_out_port"].as<unsigned short>();
+
+
+    if (!config["colo"]["sec"].IsDefined()) {
+        err = "cannot find colo sec definition.";
+        return -1;
+    }
+    if (!config["colo"]["sec"]["telnet_port"].IsDefined()) {
+        err = "cannot find colo sec telnet_port.";
+        return -1;
+    }
+    new_domain.sec.telnet_port = config["colo"]["sec"]["telnet_port"].as<unsigned short>();
+    
+    if (!config["colo"]["sec"]["nbd_port"].IsDefined()) {
+        err = "cannot find colo sec nbd_port.";
+        return -1;
+    }
+    new_domain.sec.nbd_port = config["colo"]["sec"]["nbd_port"].as<unsigned short>();
+
+    if (!config["colo"]["sec"]["migrate_port"].IsDefined()) {
+        err = "cannot find colo sec migrate_port.";
+        return -1;
+    }
+    new_domain.sec.migrate_port = config["colo"]["sec"]["migrate_port"].as<unsigned short>();
+
+    if (!config["colo"]["sec"]["red0_port"].IsDefined()) {
+        err = "cannot find colo sec red0_port.";
+        return -1;
+    }
+    new_domain.sec.red0_port = config["colo"]["sec"]["red0_port"].as<unsigned short>();
+
+    if (!config["colo"]["sec"]["red1_port"].IsDefined()) {
+        err = "cannot find colo sec red1_port.";
+        return -1;
+    }
+    new_domain.sec.red1_port = config["colo"]["sec"]["red1_port"].as<unsigned short>();
     return 0;
 }
 
@@ -146,7 +217,7 @@ int generate_vm_cmd(const domain& d, shell_command& cmd) {
     ADD_ARGS("-overcommit", "mem-lock=off");
     ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server=on,wait=off");   
     ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=off");
-    ADD_ARGS("-vnc", ":7");
+    ADD_ARGS("-vnc", ":" + std::to_string(d.vnc_port));
     ADD_ARGS("-rtc", "base=utc");
     ADD_ARGS("-smbios", "type=1");
     ADD_ARG("-no-user-config");
@@ -176,9 +247,9 @@ int generate_pvm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     ADD_ARGS("-m", std::to_string(d.memory_size));
     ADD_ARGS("-smp", std::to_string(d.vcpu));
     ADD_ARGS("-overcommit", "mem-lock=off");
-    ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server");   
+    ADD_ARGS("-chardev", "socket,id=qmp,port=" + std::to_string(d.pri.telnet_port) + ",host=localhost,server");   
     ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=off");
-    ADD_ARGS("-vnc", ":7");
+    ADD_ARGS("-vnc", ":" + std::to_string(d.vnc_port));
     ADD_ARGS("-rtc", "base=utc");
     ADD_ARGS("-smbios", "type=1");
     ADD_ARG("-no-user-config");
@@ -192,12 +263,12 @@ int generate_pvm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
             + d.net.br + ",helper=" + d.net.helper);
     ADD_ARGS("-device", "virtio-net-pci,id=e0,netdev=" + d.net.id 
             + ",csum=false,mrg_rxbuf=false,gso=false,mac=" + d.net.mac);
-    ADD_ARGS("-chardev", "socket,id=mirror0,host=" + host_ip + ",port=9003,server=on,wait=off");
-    ADD_ARGS("-chardev", "socket,id=compare1,host=" + host_ip + ",port=9004,server=on,wait=on");
-    ADD_ARGS("-chardev", "socket,id=compare0,host=" + host_ip + ",port=9001,server=on,wait=off");
-    ADD_ARGS("-chardev", "socket,id=compare0-0,host=" + host_ip + ",port=9001,reconnect=1");
-    ADD_ARGS("-chardev", "socket,id=compare_out,host=" + host_ip + ",port=9005,server=on,wait=off");
-    ADD_ARGS("-chardev", "socket,id=compare_out0,host=" + host_ip + ",port=9005,reconnect=1");
+    ADD_ARGS("-chardev", "socket,id=mirror0,host=" + host_ip + ",port=" + std::to_string(d.pri.mirror_port) + ",server=on,wait=off");
+    ADD_ARGS("-chardev", "socket,id=compare1,host=" + host_ip + ",port=" + std::to_string(d.pri.cmp1_port) + ",server=on,wait=on");
+    ADD_ARGS("-chardev", "socket,id=compare0,host=" + host_ip + ",port=" + std::to_string(d.pri.cmp0_port) + ",server=on,wait=off");
+    ADD_ARGS("-chardev", "socket,id=compare0-0,host=" + host_ip + ",port=" + std::to_string(d.pri.cmp0_port) + ",reconnect=1");
+    ADD_ARGS("-chardev", "socket,id=compare_out,host=" + host_ip + ",port=" + std::to_string(d.pri.cmp_out_port) + ",server=on,wait=off");
+    ADD_ARGS("-chardev", "socket,id=compare_out0,host=" + host_ip + ",port=" + std::to_string(d.pri.cmp_out_port) + ",reconnect=1");
     ADD_ARGS("-object", "filter-mirror,id=m0,netdev=" + d.net.id + ",queue=tx,outdev=mirror0");
     ADD_ARGS("-object", "filter-redirector,netdev=" + d.net.id + ",id=redire0,queue=rx,indev=compare_out");
     ADD_ARGS("-object", "filter-redirector,netdev=" + d.net.id + ",id=redire1,queue=rx,outdev=compare0");
@@ -220,9 +291,9 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     ADD_ARGS("-m", std::to_string(d.memory_size));
     ADD_ARGS("-smp", std::to_string(d.vcpu));
     ADD_ARGS("-overcommit", "mem-lock=off");
-    ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server");   
+    ADD_ARGS("-chardev", "socket,id=qmp,port=" + std::to_string(d.sec.telnet_port) + ",host=localhost,server");   
     ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=off");
-    ADD_ARGS("-vnc", ":7");
+    ADD_ARGS("-vnc", ":" + std::to_string(d.vnc_port));
     ADD_ARGS("-rtc", "base=utc");
     ADD_ARGS("-smbios", "type=1");
     ADD_ARG("-no-user-config");
@@ -236,8 +307,8 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
             + d.net.br + ",helper=" + d.net.helper);
     ADD_ARGS("-device", "virtio-net-pci,id=e0,netdev=" + d.net.id 
             + ",csum=false,mrg_rxbuf=false,gso=false,mac=" + d.net.mac);
-    ADD_ARGS("-chardev", "socket,id=red0,host=" + pri_ip + ",port=9003,reconnect=1");
-    ADD_ARGS("-chardev", "socket,id=red1,host=" + pri_ip + ",port=9004,reconnect=1");
+    ADD_ARGS("-chardev", "socket,id=red0,host=" + pri_ip + ",port=" + std::to_string(d.sec.red0_port) + ",reconnect=1");
+    ADD_ARGS("-chardev", "socket,id=red1,host=" + pri_ip + ",port=" + std::to_string(d.sec.red1_port) + ",reconnect=1");
     ADD_ARGS("-object", "filter-redirector,id=f1,netdev=" + d.net.id + ",queue=tx,indev=red0,vnet_hdr_support");
     ADD_ARGS("-object", "filter-redirector,id=f2,netdev=" + d.net.id + ",queue=rx,outdev=red1,vnet_hdr_support");
     ADD_ARGS("-object", "filter-rewriter,id=rew0,netdev=" + d.net.id + ",queue=all,vnet_hdr_support");        
@@ -247,7 +318,7 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
             + ",top-id=colo-disk0,file.file.filename=" + d.disk.active_path + ",file.backing.driver=" 
             + d.disk.driver + ",file.backing.file.filename=" + d.disk.hidden_path + ",file.backing.backing=parent0");   
     ADD_ARGS("-drive", "if=virtio,id=colo-disk0,driver=quorum,read-pattern=fifo,vote-threshold=1,children.0=childs0");
-    ADD_ARGS("-incoming", "tcp:0:8888");        
+    ADD_ARGS("-incoming", "tcp:0:" + std::to_string(d.sec.migrate_port));        
     return 0;
 }
 
@@ -255,11 +326,15 @@ int generate_pvm_qmpcmd(const domain& d, const colo_status& cs, const colod_doma
     std::string snd_ip = cds.colo_status == COLO_DOMAIN_PRIMARY ? cs.peer_ip : cs.host_ip;
     qmp_cmds.clear();
     qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
-    qmp_cmds.push_back("{'execute': 'human-monitor-command', 'arguments': {'command-line': 'drive_add -n buddy driver=replication,mode=primary,file.driver=nbd,file.host=192.168.10.3,file.port=9999,file.export=parent0,node-name=replication0'}}");
+    qmp_cmds.push_back(
+        "{'execute': 'human-monitor-command', 'arguments': {'command-line': 'drive_add -n buddy driver=replication,mode=primary,file.driver=nbd,file.host="
+        + snd_ip + ",file.port=" + std::to_string(d.sec.nbd_port)
+        + ",file.export=parent0,node-name=replication0'}}"
+    );
     qmp_cmds.push_back("{'execute': 'x-blockdev-change', 'arguments':{'parent': 'colo-disk0', 'node': 'replication0' } }");
     qmp_cmds.push_back("{'execute': 'migrate-set-capabilities', 'arguments': {'capabilities': [ {'capability': 'x-colo', 'state': true }] } }");
     qmp_cmds.push_back("{'execute': 'migrate-set-parameters', 'arguments': {'max-bandwidth': 40000000000 } }");
-    qmp_cmds.push_back("{'execute': 'migrate', 'arguments': {'uri': 'tcp:" + snd_ip + ":8888', 'colo':true } }");
+    qmp_cmds.push_back("{'execute': 'migrate', 'arguments': {'uri': 'tcp:" + snd_ip + ":" + std::to_string(d.sec.migrate_port) + "', 'colo':true } }");
     //qmp_cmds.push_back("{'execute': 'trace-event-set-state', 'arguments': {'name': 'colo*', 'enable': true } }");
     return 0;
 }
@@ -268,7 +343,8 @@ int generate_svm_qmpcmd(const domain& d, const colo_status& cs, const colod_doma
     std::string snd_ip = cds.colo_status == COLO_DOMAIN_PRIMARY ? cs.peer_ip : cs.host_ip;
     qmp_cmds.clear();
     qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
-    qmp_cmds.push_back("{'execute': 'nbd-server-start', 'arguments': {'addr': {'type': 'inet', 'data': {'host': '" + snd_ip + "', 'port':'9999' } } } }");
+    qmp_cmds.push_back("{'execute': 'nbd-server-start', 'arguments': {'addr': {'type': 'inet', 'data': {'host': '" 
+    + snd_ip + "', 'port':'" + std::to_string(d.sec.nbd_port) + "' } } } }");
     qmp_cmds.push_back("{'execute': 'nbd-server-add', 'arguments': {'device': 'parent0', 'writable': true } }");
     qmp_cmds.push_back("{'execute': 'migrate-set-parameters', 'arguments': {'max-bandwidth': 40000000000 } }");
     //qmp_cmds.push_back("{'execute': 'trace-event-set-state', 'arguments': {'name': 'colo*', 'enable': true } }");

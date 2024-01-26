@@ -36,7 +36,7 @@ colod_ret_val colod_set_params(std::string domain_name, std::string property, in
 colod_ret_val colod_do_failover(std::string domain_name, COLO_DOMAIN_STATUS cds);
 
 
-// peer colod insterface
+// peer colod interface
 colod_ret_val peer_colod_connect_test();
 colod_ret_val peer_colod_connect_test_reply();
 colod_ret_val colod_domain_test(std::string domain_name);

@@ -27,6 +27,8 @@ typedef struct _domain
     std::string os_machine;
     std::string os_type;
     std::string cpu_type;
+
+    unsigned short vnc_port;
     struct _disk {
         std::string driver;
         int disk_size;
@@ -42,7 +44,6 @@ typedef struct _domain
         std::string mac;
     } net;
 
-    std::vector<int> port_list;
     struct _pri {
         unsigned short telnet_port;
         unsigned short mirror_port;
