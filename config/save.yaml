@@ -1,0 +1,10 @@
+save_status:
+  local_status: ~
+  colod_port: ~
+  host_ip: ~
+  peer_ip: ~
+  host_user: ~
+  peer_user: ~
+  host_file_path: /usr/local/etc/colod/
+  peer_file_path: /usr/local/etc/colod/
+domains: ~

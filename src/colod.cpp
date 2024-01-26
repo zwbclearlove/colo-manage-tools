@@ -41,7 +41,7 @@ int colod_daemon() {
     setsid(); //第二步
     chdir("/"); //第三步
     umask(0); //第四步
-    if ((fd = open("/home/ubuntu/config/colo_manage_tools/colod.log", O_RDWR | O_APPEND | O_CREAT, 0)) != -1) {
+    if ((fd = open(DEFAULT_LOG_FILE, O_RDWR | O_APPEND | O_CREAT, 0)) != -1) {
         dup2(fd, STDIN_FILENO);
         dup2(fd, STDOUT_FILENO);
         dup2(fd, STDERR_FILENO);
