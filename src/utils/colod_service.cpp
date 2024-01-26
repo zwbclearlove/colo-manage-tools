@@ -2,8 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <csignal>
-
-
 #include <domain.h>
 #include <runvm.h>
 #include "colod.h"
@@ -245,6 +243,7 @@ colod_ret_val colod_list(bool show_all) {
     };
 }
 
+
 int send_qmp_cmds(std::vector<std::string> qmp_cmds) {
     qmp_socket qs("127.0.0.1", 4444);
     int ret = qs.qmp_connect();
@@ -356,6 +355,7 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     rs.domains[domain_name].pid = pid;
     rs.domains[domain_name].status = DOMAIN_COLO_ENABLED;
 
+    usleep(50000);
     // send qmp command
     
     if (cur_status == COLO_DOMAIN_PRIMARY) {
@@ -380,9 +380,9 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
 
         std::vector<std::string> qmp_cmds;
         generate_pvm_qmpcmd(d, rs.current_status, rs.domains[domain_name], qmp_cmds);
-        for (auto& cmd : qmp_cmds) {
-            LOG(cmd);
-        }
+        // for (auto& cmd : qmp_cmds) {
+        //     LOG(cmd);
+        // }
         if (send_qmp_cmds(qmp_cmds) < 0) {
             return {
                 -1,
@@ -393,9 +393,9 @@ colod_ret_val colod_start(std::string domain_name, bool colo_enable) {
     } else if (cur_status == COLO_DOMAIN_SECONDARY) {
         std::vector<std::string> qmp_cmds;
         generate_svm_qmpcmd(d, rs.current_status, rs.domains[domain_name], qmp_cmds);
-        for (auto& cmd : qmp_cmds) {
-            LOG(cmd);
-        }
+        // for (auto& cmd : qmp_cmds) {
+        //     LOG(cmd);
+        // }
         if (send_qmp_cmds(qmp_cmds) < 0) {
             return {
                 -1,
