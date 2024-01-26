@@ -3,9 +3,9 @@ colo:
   colod_port: 5678
   host_ip: 192.168.10.2
   host_user: ubuntu
-  host_file_path: /home/ubuntu/config/colo_manage_tools/
+  host_file_path: /home/ubuntu/colod/
   peer_ip: 192.168.10.3
   peer_user: ubuntu
-  peer_file_path: /home/ubuntu/config/colo_manage_tools/
+  peer_file_path: /home/ubuntu/colod/
     
 

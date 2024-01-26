@@ -116,7 +116,7 @@ int save_domain_info(colod_domain_status& ds, std::string& err) {
     YAML::Node sf = YAML::LoadFile(DEFAULT_SAVE_FILE);
     YAML::Node dom;
     dom["name"] = ds.name;
-    dom["path"] = DEFAULT_SAVE_PATH + ds.name + ".yaml";;
+    dom["path"] = ds.config_file_path;
     dom["pid"] = -1;
     dom["status"] = "shutoff";
     dom["colo_enable"] = false;
@@ -148,7 +148,8 @@ int save_domain_info(colod_domain_status& ds, std::string& err) {
 colod_ret_val colod_define(std::string vm_file_path) {
     domain d;
     std::string err;
-    if (vm_define(vm_file_path, d, err) < 0) {
+    
+    if (vm_define(vm_file_path, rs.current_status.host_file_path, d, err) < 0) {
         return {
             -1,
             err,
@@ -161,7 +162,7 @@ colod_ret_val colod_define(std::string vm_file_path) {
     ds.status = DOMAIN_SHUT_OFF;
     ds.colo_enable = false;
     ds.colo_status = COLO_DOMAIN_NONE;
-    ds.config_file_path = DEFAULT_SAVE_PATH + ds.name + ".yaml";
+    ds.config_file_path = rs.current_status.host_file_path + ds.name + ".yaml";
     if (save_domain_info(ds, err) < 0) {
         return {
             -1,
@@ -649,7 +650,7 @@ colod_ret_val colod_set_params(std::string domain_name, std::string property, in
 colod_ret_val colod_do_failover(std::string domain_name, COLO_DOMAIN_STATUS cds) {
     std::cout << "colod_do_failover" << std::endl;
     if (cds == COLO_DOMAIN_PRIMARY) {
-        
+
 
     } else if (cds == COLO_DOMAIN_SECONDARY) {
 

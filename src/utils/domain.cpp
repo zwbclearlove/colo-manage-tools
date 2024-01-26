@@ -275,16 +275,14 @@ int generate_svm_qmpcmd(const domain& d, const colo_status& cs, const colod_doma
     return 0;
 }
 
-int save_new_vm_file(const YAML::Node& vmdef, domain& d, std::string& err) {
-    YAML::Node dom;
-    std::string save_path = DEFAULT_SAVE_PATH + vmdef["name"].as<std::string>() + ".yaml";
-    std::ofstream fout2(save_path);
+int save_new_vm_file(const YAML::Node& vmdef, const std::string& domain_name, const std::string& save_path) {
+    std::ofstream fout2(save_path + domain_name + ".yaml");
     fout2 << vmdef;
     fout2.close();
     return 0;
 }
 
-int vm_define(const std::string& vm_def_filepath, domain& d, std::string& err) {
+int vm_define(const std::string& vm_def_filepath, const std::string& save_path, domain& d, std::string& err) {
     YAML::Node defconfig = YAML::LoadFile(vm_def_filepath);
     if (!defconfig["name"]) {
         err = "cannot parse vm name.";
@@ -301,7 +299,7 @@ int vm_define(const std::string& vm_def_filepath, domain& d, std::string& err) {
         return -1;
     }
     
-    if (save_new_vm_file(defconfig, d, err) < 0) {
+    if (save_new_vm_file(defconfig, name, save_path) < 0) {
         return -1;
     }
     
