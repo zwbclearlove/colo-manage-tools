@@ -58,9 +58,9 @@ qmp_socket::qmp_socket(std::string sockaddr, int port) {
 }
 
 qmp_socket::~qmp_socket() {
-    if (this->sockfd > 0) {
-        close(this->sockfd);
-    }
+    // if (this->sockfd > 0) {
+    //     close(this->sockfd);
+    // }
 }
 
 int qmp_socket::qmp_connect() {
@@ -109,7 +109,8 @@ int qmp_socket::qmp_recv(std::string& msg) {
 }
 
 void qmp_socket::qmp_close() {
-    //close(this->sockfd);
+    
     shutdown(this->sockfd, SHUT_RDWR);
+    close(this->sockfd);
 }
  
