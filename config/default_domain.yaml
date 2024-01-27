@@ -16,7 +16,7 @@ disk:
   active_path: /home/ubuntu/vmtest/secondary-active.qcow2
 
 display:
-  vnc_port: 7
+  vnc_port: 10
 
 net:
   id: hn0

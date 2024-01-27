@@ -7,6 +7,8 @@
 #define DEFAULT_SAVE_PATH "/usr/local/etc/colod/"
 #define DEFAULT_SAVE_FILE "/usr/local/etc/colod/save.yaml"
 #define DEFAULT_LOG_FILE "/usr/local/etc/colod/colod.log"
+#define COLOD_PORT 5678
+
 
 enum COLO_NODE_STATUS {
     COLO_NODE_NONE,

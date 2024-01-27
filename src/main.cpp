@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
 
     buttonrpc local_client;
-	local_client.as_client("127.0.0.1", 5678);
+	local_client.as_client("127.0.0.1", COLOD_PORT);
 	local_client.set_timeout(2000);
 
     std::string cur_command_type_str = cmd_parser.get<std::string>("command-type");
@@ -354,7 +354,24 @@ int main(int argc, char *argv[]) {
         break;
     case COMMAND_DO_FAILOVER:
         {
+            if (!cmd_parser.exist("domain")) {
+                std::cout << "no domain name." << std::endl;
+                return 0;
+            }
+            std::string name = cmd_parser.get<std::string>("domain");
+            auto ret = local_client.call<colod_ret_val>(colo_cmd_type_to_str_map[COMMAND_DO_FAILOVER], name);
 
+            if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
+                std::cout << "connect to colod timeout." << std::endl;
+                goto cleanup;
+            }
+
+            colod_ret_val crv = ret.val();
+            if (crv.code < 0) {
+                std::cout << crv.msg << std::endl;
+                goto cleanup;
+            }
+            std::cout << crv.msg << std::endl; 
         }
         break;
     default:

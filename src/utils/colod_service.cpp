@@ -39,7 +39,7 @@ colod_ret_val colod_connect_peer(std::string config_file_path) {
     }
     LOG("current peer status : " + rs.current_status.peer_ip);
     // todo: send to colod
-    set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+    set_remote_client(rs.current_status.peer_ip, COLOD_PORT);
     remote_client_init = true;
     
     auto ret = remote_client.call<colod_ret_val>("peer-save-status", rs.current_status);
@@ -513,7 +513,7 @@ colod_ret_val colod_colo_enable(std::string domain_name) {
         rs.domains[domain_name].colo_status = COLO_DOMAIN_SECONDARY;
     }
     if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+        set_remote_client(rs.current_status.peer_ip, COLOD_PORT);
     }
     auto ret = remote_client.call<colod_ret_val>("peer-save-domain", rs.domains[domain_name]);
     if (ret.error_code() != buttonrpc::RPC_ERR_SUCCESS) {
@@ -648,13 +648,73 @@ colod_ret_val colod_set_params(std::string domain_name, std::string property, in
 }
 
 
-colod_ret_val colod_do_failover(std::string domain_name, COLO_DOMAIN_STATUS cds) {
-    std::cout << "colod_do_failover" << std::endl;
-    if (cds == COLO_DOMAIN_PRIMARY) {
+colod_ret_val colod_do_failover(std::string domain_name) {
+    if (rs.domains[domain_name].status == DOMAIN_SHUT_OFF) {
+        return {
+            -1,
+            "can not do failover for a shutoff domain.",
+        }; 
+    }
+    if (!rs.domains[domain_name].colo_enable) {
+        return {
+            -1,
+            "can not do failover for a colo-disabled domain.",
+        }; 
+    }
 
+    COLO_DOMAIN_STATUS cds = rs.domains[domain_name].colo_status;
+    if (cds == COLO_DOMAIN_SECONDARY) {
+        // send qmp command
+        std::vector<std::string> qmp_cmds;
+        qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
+        qmp_cmds.push_back("{'exec-oob': 'colo-enable-teardown' }");
+        qmp_cmds.push_back("{'execute': 'nbd-server-stop'}");
+        qmp_cmds.push_back("{'execute': 'x-colo-lost-heartbeat'}");
+        qmp_cmds.push_back("{'execute': 'query-status'}");
+        qmp_cmds.push_back("{'execute': 'object-del', 'arguments':{ 'id': 'f2' } }");
+        qmp_cmds.push_back("{'execute': 'object-del', 'arguments':{ 'id': 'f1' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'red1' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'red0' } }");
+        // prepare rebuild code
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " set params failed : send qmp cmds failed.",
+            };
+        }
+        return {
+            0,
+            "Primary vm crash and do failover.",
+        };
+    } else if (cds == COLO_DOMAIN_PRIMARY) {
+        std::vector<std::string> qmp_cmds;
+        qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
+        qmp_cmds.push_back("{'exec-oob': 'colo-enable-teardown' }");
+        qmp_cmds.push_back("{'execute': 'x-blockdev-change', 'arguments':{ 'parent': 'colo-disk0', 'child': 'children.1'} }");
+        qmp_cmds.push_back("{'execute': 'human-monitor-command', 'arguments':{ 'command-line': 'drive_del replication0' } }");
+        qmp_cmds.push_back("{'execute': 'x-colo-lost-heartbeat' }");
+        qmp_cmds.push_back("{'execute': 'object-del', 'arguments':{ 'id': 'm0' } }");
+        qmp_cmds.push_back("{'execute': 'object-del', 'arguments':{ 'id': 'redire0' } }");
+        qmp_cmds.push_back("{'execute': 'object-del', 'arguments':{ 'id': 'redire1' } }");
+        qmp_cmds.push_back("{'execute': 'object-del', 'arguments':{ 'id': 'iothread1' } }");
+        qmp_cmds.push_back("{'execute': 'object-del', 'arguments':{ 'id': 'comp0' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'mirror0' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'compare1' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'compare0' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'compare0-0' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'compare_out' } }");
+        qmp_cmds.push_back("{'execute': 'chardev-remove', 'arguments':{ 'id': 'compare_out0' } }");
 
-    } else if (cds == COLO_DOMAIN_SECONDARY) {
-
+        if (send_qmp_cmds(qmp_cmds) < 0) {
+            return {
+                -1,
+                "colo domain " + domain_name + " set params failed : send qmp cmds failed.",
+            };
+        }
+        return {
+            0,
+            "Secondary vm crash and do failover.",
+        };
 
     }
     return {
@@ -726,9 +786,9 @@ colod_ret_val peer_colod_save_status(colo_status cs) {
     rs.current_status.peer_ip = cs.host_ip;
     rs.current_status.peer_user = cs.host_user;
     rs.current_status.peer_file_path = cs.host_file_path;
-    rs.current_status.colod_port = cs.colod_port;
+    rs.current_status.colod_port = COLOD_PORT;
     if (!remote_client_init) {
-        set_remote_client(rs.current_status.peer_ip, rs.current_status.colod_port);
+        set_remote_client(rs.current_status.peer_ip, COLOD_PORT);
     }
     if (save_colo_status(rs.current_status) < 0) {
         return {

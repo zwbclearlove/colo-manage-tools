@@ -16,11 +16,11 @@ int parse_config_file(const std::string& config_filepath, colo_status& cs) {
     }
     cs.local_status = colo_node_status_map[config["colo"]["local_status"].as<std::string>()];
 
-    if (!config["colo"]["colod_port"].IsDefined()) {
-        std::cerr << "cannot find colo colod_port." << std::endl;
-        return -1;
-    }
-    cs.colod_port = config["colo"]["colod_port"].as<int>();
+    // if (!config["colo"]["colod_port"].IsDefined()) {
+    //     std::cerr << "cannot find colo colod_port." << std::endl;
+    //     return -1;
+    // }
+    // cs.colod_port = config["colo"]["colod_port"].as<int>();
 
 
     if (!config["colo"]["host_ip"].IsDefined()) {
@@ -66,7 +66,7 @@ int save_colo_status(const colo_status& cs) {
     std::ofstream fout(DEFAULT_SAVE_FILE);
     YAML::Node ss;
     ss["local_status"] = colo_node_status_to_str_map[cs.local_status];
-    ss["colod_port"] = cs.colod_port;
+    ss["colod_port"] = COLOD_PORT;
     ss["host_ip"] = cs.host_ip;
     ss["peer_ip"] = cs.peer_ip;
     ss["host_user"] = cs.host_user;
