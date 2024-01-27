@@ -664,6 +664,7 @@ colod_ret_val colod_do_failover(std::string domain_name) {
 
     COLO_DOMAIN_STATUS cds = rs.domains[domain_name].colo_status;
     if (cds == COLO_DOMAIN_SECONDARY) {
+        rs.domains[domain_name].colo_status = COLO_DOMAIN_FAILOVER;
         // send qmp command
         std::vector<std::string> qmp_cmds;
         qmp_cmds.push_back("{'execute':'qmp_capabilities', 'arguments': { 'enable': [ 'oob' ]}}");
@@ -682,6 +683,8 @@ colod_ret_val colod_do_failover(std::string domain_name) {
                 "colo domain " + domain_name + " set params failed : send qmp cmds failed.",
             };
         }
+        rs.domains[domain_name].status = DOMAIN_RUNNING;
+        rs.domains[domain_name].colo_status = COLO_DOMAIN_DEGRADE;
         return {
             0,
             "Primary vm crash and do failover.",
@@ -711,6 +714,8 @@ colod_ret_val colod_do_failover(std::string domain_name) {
                 "colo domain " + domain_name + " set params failed : send qmp cmds failed.",
             };
         }
+        rs.domains[domain_name].status = DOMAIN_RUNNING;
+        rs.domains[domain_name].colo_status = COLO_DOMAIN_DEGRADE;
         return {
             0,
             "Secondary vm crash and do failover.",
