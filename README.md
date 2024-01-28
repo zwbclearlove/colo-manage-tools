@@ -2,7 +2,9 @@
 Manage tool for COLO-based fault-tolerant VM.
 
 # how to install
+
 base on : QEMU-COLO
+
 requirements: libzmq-4.3.5
 
 ``` shell
@@ -31,7 +33,6 @@ in config file, local status and peer status are necessary.
 ``` yaml
 colo:
   local_status: primary
-  colod_port: 5678
   host_ip: 192.168.10.2
   host_user: ubuntu
   host_file_path: /home/ubuntu/config/colo_manage_tools/
