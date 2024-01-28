@@ -2,7 +2,9 @@
 Manage tool for COLO-based fault-tolerant VM.
 
 # how to install
+
 base on : QEMU-COLO
+
 requirements: libzmq-4.3.5
 
 ``` shell
