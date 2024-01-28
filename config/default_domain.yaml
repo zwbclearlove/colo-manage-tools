@@ -4,6 +4,7 @@ qemu: /usr/local/bin/qemu-system-x86_64
 vcpu: 4
 os:
   arch: x86_64
+  OS: linux
   machine: pc-i440fx-4.2
   type: hvm
 cpu: host
@@ -25,7 +26,6 @@ net:
   mac: 00:0c:29:5e:72:33
  
 colo:
-  ports: [9003,9004,9005,9006,9007]
   pri:
     telnet_port: 4444
     mirror_port: 9003

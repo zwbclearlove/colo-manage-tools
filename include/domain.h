@@ -26,6 +26,7 @@ typedef struct _domain
     std::string os_arch_type;
     std::string os_machine;
     std::string os_type;
+    std::string os_OS;
     std::string cpu_type;
 
     unsigned short vnc_port;

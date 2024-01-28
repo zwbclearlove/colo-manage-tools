@@ -9,6 +9,7 @@ requirements: libzmq-4.3.5
 cd $PROJECT_DIR
 mkdir build
 cd build
+cmake ..
 make -j8
 sudo make install
 cd ../bin
@@ -31,7 +32,6 @@ in config file, local status and peer status are necessary.
 ``` yaml
 colo:
   local_status: primary
-  colod_port: 5678
   host_ip: 192.168.10.2
   host_user: ubuntu
   host_file_path: /home/ubuntu/config/colo_manage_tools/
@@ -52,6 +52,7 @@ qemu: /usr/local/bin/qemu-system-x86_64
 vcpu: 4
 os:
   arch: x86_64
+  OS: linux
   machine: pc-i440fx-4.2
   type: hvm
 cpu: host
@@ -63,6 +64,9 @@ disk:
   hidden_path: /home/ubuntu/vmtest/secondary-hidden.qcow2
   active_path: /home/ubuntu/vmtest/secondary-active.qcow2
 
+display:
+  vnc_port: 10
+
 net:
   id: hn0
   br: virbr0
@@ -70,7 +74,6 @@ net:
   mac: 00:0c:29:5e:72:33
  
 colo:
-  ports: [9003,9004,9005,9006,9007]
   pri:
     telnet_port: 4444
     mirror_port: 9003

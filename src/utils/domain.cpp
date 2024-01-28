@@ -50,6 +50,12 @@ int vm_config_parse(const YAML::Node& config, domain& new_domain, std::string& e
     }
     new_domain.os_type = config["os"]["type"].as<std::string>();
 
+    if (!config["os"]["OS"].IsDefined()) {
+        err = "cannot find operate system.";
+        return -1;
+    }
+    new_domain.os_OS = config["os"]["OS"].as<std::string>();
+
     if (!config["cpu"].IsDefined()) {
         err = "cannot find cpu def.";
         return -1;
@@ -215,7 +221,7 @@ int generate_vm_cmd(const domain& d, shell_command& cmd) {
     ADD_ARGS("-m", std::to_string(d.memory_size));
     ADD_ARGS("-smp", std::to_string(d.vcpu));
     ADD_ARGS("-overcommit", "mem-lock=off");
-    ADD_ARGS("-chardev", "socket,id=qmp,port=4444,host=localhost,server=on,wait=off");   
+    ADD_ARGS("-chardev", "socket,id=qmp,port=" + std::to_string(d.pri.telnet_port) + ",host=localhost,server=on,wait=off");   
     ADD_ARGS("-mon", "chardev=qmp,mode=control,pretty=off");
     ADD_ARGS("-vnc", ":" + std::to_string(d.vnc_port));
     ADD_ARGS("-rtc", "base=utc");
@@ -223,8 +229,15 @@ int generate_vm_cmd(const domain& d, shell_command& cmd) {
     ADD_ARG("-no-user-config");
     ADD_ARG("-nodefaults");
     ADD_ARGS("-boot", "menu=on,strict=on");
-    ADD_ARGS("-cpu", d.cpu_type);
-    ADD_ARGS("-device", "cirrus-vga,id=video0,bus=pci.0,addr=0x2");
+    if (d.os_OS.compare("linux") == 0) {
+        ADD_ARGS("-cpu", d.cpu_type);
+        ADD_ARGS("-device", "cirrus-vga,id=video0,bus=pci.0,addr=0x2");
+    } else if (d.os_OS.compare("windows") == 0) {
+        ADD_ARGS("-cpu", d.cpu_type + ",kvm=off,hv-vapic,hv-vpindex,hv-frequencies,hv-time,hv-relaxed,hv-spinlocks=0x1000");
+        ADD_ARGS("-device", "VGA,vgamem_mb=256,id=video0,bus=pci.0,addr=0x2");
+    } else {
+        return -1;
+    }
     ADD_ARGS("-device", "piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2");
     ADD_ARGS("-device", "usb-tablet,id=input0,bus=usb.0,port=1");
     ADD_ARGS("-netdev", "tap,id=" + d.net.id + ",vhost=off,br=" 
@@ -255,8 +268,15 @@ int generate_pvm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     ADD_ARG("-no-user-config");
     ADD_ARG("-nodefaults");
     ADD_ARGS("-boot", "menu=on,strict=on");
-    ADD_ARGS("-cpu", d.cpu_type);
-    ADD_ARGS("-device", "cirrus-vga,id=video0,bus=pci.0,addr=0x2");
+    if (d.os_OS.compare("linux") == 0) {
+        ADD_ARGS("-cpu", d.cpu_type);
+        ADD_ARGS("-device", "cirrus-vga,id=video0,bus=pci.0,addr=0x2");
+    } else if (d.os_OS.compare("windows") == 0) {
+        ADD_ARGS("-cpu", d.cpu_type + ",kvm=off,hv-vapic,hv-vpindex,hv-frequencies,hv-time,hv-relaxed,hv-spinlocks=0x1000");
+        ADD_ARGS("-device", "VGA,vgamem_mb=256,id=video0,bus=pci.0,addr=0x2");
+    } else {
+        return -1;
+    }
     ADD_ARGS("-device", "piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2");
     ADD_ARGS("-device", "usb-tablet,id=input0,bus=usb.0,port=1");
     ADD_ARGS("-netdev", "tap,id=" + d.net.id + ",vhost=off,br=" 
@@ -299,8 +319,15 @@ int generate_svm_cmd(const domain& d, const colo_status& cs, shell_command& cmd)
     ADD_ARG("-no-user-config");
     ADD_ARG("-nodefaults");
     ADD_ARGS("-boot", "menu=on,strict=on");
-    ADD_ARGS("-cpu", d.cpu_type);
-    ADD_ARGS("-device", "cirrus-vga,id=video0,bus=pci.0,addr=0x2");
+    if (d.os_OS.compare("linux") == 0) {
+        ADD_ARGS("-cpu", d.cpu_type);
+        ADD_ARGS("-device", "cirrus-vga,id=video0,bus=pci.0,addr=0x2");
+    } else if (d.os_OS.compare("windows") == 0) {
+        ADD_ARGS("-cpu", d.cpu_type + ",kvm=off,hv-vapic,hv-vpindex,hv-frequencies,hv-time,hv-relaxed,hv-spinlocks=0x1000");
+        ADD_ARGS("-device", "VGA,vgamem_mb=256,id=video0,bus=pci.0,addr=0x2");
+    } else {
+        return -1;
+    }
     ADD_ARGS("-device", "piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2");
     ADD_ARGS("-device", "usb-tablet,id=input0,bus=usb.0,port=1");
     ADD_ARGS("-netdev", "tap,id=" + d.net.id + ",vhost=off,br=" 

@@ -30,13 +30,13 @@ int main(int argc, char *argv[]) {
     cmd_parser.parse_check(argc, argv);
     if (cmd_parser.exist("restart-colod")) {
         //restart colod
-        std::cout << "restart colod." << std::endl;
+        std::cout << "todo : restart colod." << std::endl;
         return 0;
     }
 
     buttonrpc local_client;
 	local_client.as_client("127.0.0.1", COLOD_PORT);
-	local_client.set_timeout(2000);
+	local_client.set_timeout(20000);
 
     std::string cur_command_type_str = cmd_parser.get<std::string>("command-type");
 
