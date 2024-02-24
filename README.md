@@ -99,7 +99,7 @@ cd bin
 # define a colo enabled domain and start it
 ./colo_manage_tools -t define -v $DOMAIN_FILE
 ./colo_manage_tools -t colo-enable -d $DOMAIN_NAME
-./colo_manage_tools -t start -d $DOMAIN_NAME
+./colo_manage_tools -t start -d $DOMAIN_NAME --colo
 ./colo_manage_tools -t vm-status -d $DOMAIN_NAME 
 
 # set params and do failover
