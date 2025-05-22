@@ -11,6 +11,7 @@ requirements: libzmq-4.3.5
 cd $PROJECT_DIR
 mkdir build
 cd build
+cmake ..
 make -j8
 sudo make install
 cd ../bin
